@@ -1,5 +1,5 @@
 import pygame as pg
-import Engine
+import Engine as egn
 
 board = [
 	["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
@@ -19,7 +19,7 @@ boardLosAlamos = [
 	["wp", "wp", "wp", "wp", "wp", "wp"],
 	["wr", "wn", "wq", "wk", "wn", "wr"]]
 
-boardMinichess = [
+boardMiniChess = [
 	["bk", "bn", "bb", "br"],
 	["bp", "**", "**", "**"],
 	["**", "**", "**", "**"],
@@ -29,10 +29,10 @@ boardMinichess = [
 
 def main():
 
-	selected_board = boardMinichess
-	print("Hello world!")
+	selected_board = boardMiniChess
+	board = egn.Engine(selected_board)
+	board.print_board()
 
 
 if __name__ == "__main__":
 	main()
-
