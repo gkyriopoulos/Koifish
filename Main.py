@@ -29,7 +29,7 @@ boardMicroChess = [
     ["**", "**", "**", "wp"],
     ["wr", "wb", "wn", "wk"]]
 
-pieces = ["br", "bn", "bb", "bq", "bk", "bp", "wr", "wn", "wb", "wq", "wk"]
+pieces = ["br", "bn", "bb", "bq", "bk", "bp", "wr", "wn", "wb", "wq", "wk", "wp"]
 
 img = {}
 
@@ -51,8 +51,15 @@ def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
             color_index = (i + j) % 2
             pygame.draw.rect(screen, colors[color_index], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
 
+    for i in range(dim_x):
+        for j in range(dim_y):
+            piece = board[j][i]
+            if piece != "**":
+                screen.blit(img[piece], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
 
 def main():
+
+    #Choices are boardNormal,boardLosAlamos,boardMicroChess
     board = boardMicroChess
 
     # Assigning the aspect ratio for each board.
@@ -82,7 +89,6 @@ def main():
 
     # Initialising the screen.
     screen = pygame.display.set_mode((window_width, window_height))
-    screen.fill(pygame.Color("white"))
 
     # Opening the window.
     running = True
