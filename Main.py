@@ -90,6 +90,8 @@ def main():
     # Initialising the screen.
     screen = pygame.display.set_mode((window_width, window_height))
 
+    print("Hello world!")
+
     # Opening the window.
     running = True
     while running:
