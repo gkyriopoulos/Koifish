@@ -68,7 +68,7 @@ def main():
     src = []
     dst = []
     total_clicks = 0
-
+    player = "w"
     # Opening the window.
     running = True
     while running:
@@ -90,12 +90,13 @@ def main():
                     total_clicks += 1
                 elif total_clicks == 1:
                     dst = [cords_y, cords_x]
-                    board = my_engine.make_move(src, dst)
+                    board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
+                    if my_engine.board_has_changed:
+                        # After making a move swap player.
+                        player = "b" if player == "w" else "w"
                     dst.clear()
                     src.clear()
                     total_clicks = 0
-                print(src)
-                print(dst)
 
         # Draw current board.
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
