@@ -1,42 +1,15 @@
 import pygame
 import pygame.display
 import pygame.draw_py
-
 import Engine
-
-normalBoard = [
-    ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
-    ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-    ["**", "**", "**", "**", "**", "**", "**", "**"],
-    ["**", "**", "**", "**", "**", "**", "**", "**"],
-    ["**", "**", "**", "**", "**", "**", "**", "**"],
-    ["**", "**", "**", "**", "**", "**", "**", "**"],
-    ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-    ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]]
-
-boardLosAlamos = [
-    ["br", "bn", "bq", "bk", "bn", "br"],
-    ["bp", "bp", "bp", "bp", "bp", "bp"],
-    ["**", "**", "**", "**", "**", "**"],
-    ["**", "**", "**", "**", "**", "**"],
-    ["wp", "wp", "wp", "wp", "wp", "wp"],
-    ["wr", "wn", "wq", "wk", "wn", "wr"]]
-
-boardMicroChess = [
-    ["bk", "bn", "bb", "br"],
-    ["bp", "**", "**", "**"],
-    ["**", "**", "**", "**"],
-    ["**", "**", "**", "wp"],
-    ["wr", "wb", "wn", "wk"]]
 
 pieces = ["br", "bn", "bb", "bq", "bk", "bp", "wr", "wn", "wb", "wq", "wk", "wp"]
 
 img = {}
 
-color_white = [240, 217, 181, 255]
-color_black = [181, 136, 99, 255]
+# Colors for the chessboard
+colors = [pygame.Color([240, 217, 181, 255]), pygame.Color([181, 136, 99, 255])]
 
-colors = [pygame.Color(color_white), pygame.Color(color_black)]
 
 # Function that loads piece images from the disk.
 def load_assets(piece_width, piece_height):
@@ -48,33 +21,32 @@ def load_assets(piece_width, piece_height):
 def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
     for i in range(dim_x):
         for j in range(dim_y):
+            # Coloring the board
             color_index = (i + j) % 2
-            pygame.draw.rect(screen, colors[color_index], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
-
-    for i in range(dim_x):
-        for j in range(dim_y):
+            pygame.draw.rect(screen, colors[color_index],
+                             pygame.Rect(i * square_width, j * square_height, square_width, square_height))
             piece = board[j][i]
             if piece != "**":
                 screen.blit(img[piece], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
 
-def main():
 
-    #Choices are boardNormal,boardLosAlamos,boardMicroChess
-    board = boardMicroChess
+def main():
+    # Choices are Normal, LosAlamos, MicroChess
+    board_choice = "MicroChess"
 
     # Assigning the aspect ratio for each board.
-    if board == boardMicroChess:
+    if board_choice == "MicroChess":
         window_width = 256
         window_height = 320
         dim_x = 4
         dim_y = 5
-    elif board == boardLosAlamos:
+    elif board_choice == "LosAlamos":
         window_width = 384
         window_height = 384
         dim_x = 6
         dim_y = 6
     else:
-        board = normalBoard
+        board_choice = "Normal"
         window_width = 512
         window_height = 512
         dim_x = 8
@@ -90,8 +62,8 @@ def main():
     # Initialising the screen.
     screen = pygame.display.set_mode((window_width, window_height))
 
-    print("Hello world!")
-
+    my_engine = Engine.Engine(board_choice)
+    board = my_engine.board
     # Opening the window.
     running = True
     while running:
@@ -100,7 +72,11 @@ def main():
                 running = False
         # Draw current board.
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
-        pygame.display.flip()
+        pygame.display.update()
+        curr = input("Curr: ")
+        dest = input("Dest: ")
+        board = my_engine.move(curr, dest)
+        my_engine.board
 
 
 if __name__ == "__main__":
