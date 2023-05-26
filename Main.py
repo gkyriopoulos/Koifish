@@ -88,7 +88,7 @@ def main():
                     total_clicks += 1
                 elif total_clicks == 1:
                     dst = [coords_y, coords_x]
-                    board = my_engine.mouse_move(src, dst)
+                    board = my_engine.make_move(src, dst)
                     dst.clear()
                     src.clear()
                     total_clicks = 0

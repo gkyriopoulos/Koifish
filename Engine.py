@@ -41,17 +41,14 @@ class Engine:
         self.white_moves = True
 
     def type_move(self, src, dst):
-        return self._make_move(self._convert_type_move(src), self._convert_type_move(dst))
+        return self.make_move(self.convert_type_move(src), self.convert_type_move(dst))
 
-    def mouse_move(self, curr, dst):
-        return self._make_move(curr, dst)
-
-    def _convert_type_move(self, move):
+    def convert_type_move(self, move):
         move_x = self._microChessMoves[move][0]
         move_y = self._microChessMoves[move][1]
         return [move_y, move_x]
 
-    def _make_move(self, src, dst):
+    def make_move(self, src, dst):
 
         if self.board[src[0]][src[1]] == "**":
             return self.board
