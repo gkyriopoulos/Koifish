@@ -64,19 +64,42 @@ def main():
 
     my_engine = Engine.Engine(board_choice)
     board = my_engine.board
+
+    src = []
+    dst = []
+    total_clicks = 0
+
     # Opening the window.
     running = True
     while running:
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
                 running = False
+            elif e.type == pygame.MOUSEBUTTONDOWN:
+                coords = pygame.mouse.get_pos()
+                coords_x = coords[0] // square_width
+                coords_y = coords[1] // square_height
+                if src == [coords_y, coords_x]:
+                    dst.clear()
+                    src.clear()
+                    total_clicks = 0
+                elif total_clicks == 0:
+                    src = [coords_y, coords_x]
+                    total_clicks += 1
+                elif total_clicks == 1:
+                    dst = [coords_y, coords_x]
+                    board = my_engine.mouse_move(src, dst)
+                    dst.clear()
+                    src.clear()
+                    total_clicks = 0
+
         # Draw current board.
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
         pygame.display.update()
-        curr = input("Curr: ")
-        dest = input("Dest: ")
-        board = my_engine.move(curr, dest)
-        my_engine.board
+        # Testing type moves
+        # type_src = input("Src: ")
+        # type_dst = input("Dst: ")
+        # my_engine.type_move(type_src, type_dst)
 
 
 if __name__ == "__main__":

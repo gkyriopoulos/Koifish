@@ -40,16 +40,23 @@ class Engine:
 
         self.white_moves = True
 
-    def move(self, curr, dest):
-        curr_x, curr_y = self._convert_move(curr)
-        dest_x, dest_y = self._convert_move(dest)
+    def type_move(self, src, dst):
+        return self._make_move(self._convert_type_move(src), self._convert_type_move(dst))
 
-        self.board[dest_y][dest_x] = self.board[curr_y][curr_x]
-        self.board[curr_y][curr_x] = "**"
+    def mouse_move(self, curr, dst):
+        return self._make_move(curr, dst)
 
-        return self.board
-
-    def _convert_move(self, move):
+    def _convert_type_move(self, move):
         move_x = self._microChessMoves[move][0]
         move_y = self._microChessMoves[move][1]
-        return move_x, move_y
+        return [move_y, move_x]
+
+    def _make_move(self, src, dst):
+
+        if self.board[src[0]][src[1]] == "**":
+            return self.board
+
+        self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+        self.board[src[0]][src[1]] = "**"
+
+        return self.board
