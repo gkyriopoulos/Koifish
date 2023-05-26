@@ -76,22 +76,26 @@ def main():
             if e.type == pygame.QUIT:
                 running = False
             elif e.type == pygame.MOUSEBUTTONDOWN:
-                coords = pygame.mouse.get_pos()
-                coords_x = coords[0] // square_width
-                coords_y = coords[1] // square_height
-                if src == [coords_y, coords_x]:
+                cords = pygame.mouse.get_pos()
+                cords_x = cords[0] // square_width
+                cords_y = cords[1] // square_height
+                # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
+                # => reset dst, src
+                if src == [cords_y, cords_x] or (my_engine.board[cords_y][cords_x] == "**" and total_clicks == 0):
                     dst.clear()
                     src.clear()
                     total_clicks = 0
                 elif total_clicks == 0:
-                    src = [coords_y, coords_x]
+                    src = [cords_y, cords_x]
                     total_clicks += 1
                 elif total_clicks == 1:
-                    dst = [coords_y, coords_x]
+                    dst = [cords_y, cords_x]
                     board = my_engine.make_move(src, dst)
                     dst.clear()
                     src.clear()
                     total_clicks = 0
+                print(src)
+                print(dst)
 
         # Draw current board.
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)

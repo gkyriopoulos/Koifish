@@ -50,9 +50,6 @@ class Engine:
 
     def make_move(self, src, dst):
 
-        if self.board[src[0]][src[1]] == "**":
-            return self.board
-
         self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
         self.board[src[0]][src[1]] = "**"
 
