@@ -32,7 +32,7 @@ def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
 
 def main():
     # Choices are Normal, LosAlamos, MicroChess
-    board_choice = "MicroChess"
+    board_choice = "Normal"
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":

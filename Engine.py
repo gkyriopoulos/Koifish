@@ -53,8 +53,8 @@ class Engine:
         #  start with handicap, just and idea for now.
         self.score = 0
         self.turn_player = "w"
-        self.pieces = []
         self.available_moves = []
+        self.generate_available_moves()
         self.board_has_changed = False
 
     def type_move(self, src, dst, player):
@@ -66,7 +66,6 @@ class Engine:
         return [move_y, move_x]
 
     def attempt_move(self, src, dst, player):
-        self.get_available_moves()
         print(self.available_moves)
         print((src, dst))
         if (src, dst) in self.available_moves:
@@ -91,9 +90,10 @@ class Engine:
         self.turn_player = "b" if self.turn_player == "w" else "w"
         self.board_has_changed = True
         self.available_moves.clear()
+        self.generate_available_moves()
         return self.board
 
-    def get_available_moves(self):
+    def generate_available_moves(self):
         for i in range(self.dim_x):
             for j in range(self.dim_y):
                 color = self.get_color([j, i])
@@ -110,10 +110,36 @@ class Engine:
                         self.get_king_moves([j, i])
                     elif self.get_piece([j, i]) == "q":
                         self.get_queen_moves([j, i])
+
         self.available_moves = _remove_duplicates(self.available_moves)
 
     def get_pawn_moves(self, src, color):
-        return 1
+        if color == "w":
+            direction = [(-1, -1), (-1, 0), (-2, 0), (-1, 1)]
+            for d in direction:
+                calc_y = src[0] + d[0]
+                calc_x = src[1] + d[1]
+                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                    if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
+                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                    if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
+                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                    if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
+                            (calc_y, calc_x)) != self.turn_player:
+                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+        else:
+            direction = [(1, -1), (1, 0), (2, 0), (1, 1)]
+            for d in direction:
+                calc_y = src[0] + d[0]
+                calc_x = src[1] + d[1]
+                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                    if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
+                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                    if d == (2, 0) and self.get_piece((calc_y, calc_x)) == "*" and src[0] == 1:
+                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                    if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
+                            (calc_y, calc_x)) != self.turn_player:
+                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
 
     def get_rook_moves(self, src):
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
