@@ -1,5 +1,4 @@
-def _remove_duplicates(alist):
-    return list(set(alist))
+import itertools
 
 
 class Engine:
@@ -57,10 +56,11 @@ class Engine:
         self.generate_available_moves()
         self.board_has_changed = False
 
+    # TODO: Type moves dont work for now but it's an easy fix though
     def type_move(self, src, dst, player):
-        return self.make_move(self.convert_type_move(src), self.convert_type_move(dst), player)
+        return self._make_move(self._convert_type_move(src), self._convert_type_move(dst), player)
 
-    def convert_type_move(self, move):
+    def _convert_type_move(self, move):
         move_x = self._microChessMoves[move][0]
         move_y = self._microChessMoves[move][1]
         return [move_y, move_x]
@@ -69,13 +69,13 @@ class Engine:
         print(self.available_moves)
         print((src, dst))
         if (src, dst) in self.available_moves:
-            self.make_move(src, dst, player)
+            self._make_move(src, dst, player)
             return self.board
         else:
             self.board_has_changed = False
             return self.board
 
-    def make_move(self, src, dst, player):
+    def _make_move(self, src, dst, player):
 
         if player != self.turn_player:
             print("It's not your turn yet.")
@@ -96,52 +96,62 @@ class Engine:
     def generate_available_moves(self):
         for i in range(self.dim_x):
             for j in range(self.dim_y):
-                color = self.get_color([j, i])
+                color = self.get_color((j, i))
                 if color == self.turn_player:
-                    if self.get_piece([j, i]) == "p":
-                        self.get_pawn_moves([j, i], color)
-                    elif self.get_piece([j, i]) == "r":
-                        self.get_rook_moves([j, i])
-                    elif self.get_piece([j, i]) == "n":
-                        self.get_knight_moves([j, i])
-                    elif self.get_piece([j, i]) == "b":
-                        self.get_bishop_moves([j, i])
-                    elif self.get_piece([j, i]) == "k":
-                        self.get_king_moves([j, i])
-                    elif self.get_piece([j, i]) == "q":
-                        self.get_queen_moves([j, i])
+                    moves = self.get_moves((j, i))
+                    self.available_moves.append(moves)
+        # Remove empty moves
+        self.available_moves = [x for x in self.available_moves if x]
+        # Flatten the list of moves
+        self.available_moves = list(itertools.chain(*self.available_moves))
 
-        self.available_moves = _remove_duplicates(self.available_moves)
+    def get_moves(self, src):
+        color = self.get_color((src[0], src[1]))
+        if self.is_pawn((src[0], src[1])):
+            return self._get_pawn_moves((src[0], src[1]), color)
+        elif self.is_rook((src[0], src[1])):
+            return self._get_rook_moves((src[0], src[1]))
+        elif self.is_knight((src[0], src[1])):
+            return self._get_knight_moves((src[0], src[1]))
+        elif self.is_bishop((src[0], src[1])):
+            return self._get_bishop_moves((src[0], src[1]))
+        elif self.is_king((src[0], src[1])):
+            return self._get_king_moves((src[0], src[1]))
+        elif self.is_queen((src[0], src[1])):
+            return self._get_queen_moves((src[0], src[1]))
 
-    def get_pawn_moves(self, src, color):
+    def _get_pawn_moves(self, src, color):
+        moves = []
         if color == "w":
-            direction = [(-1, -1), (-1, 0), (-2, 0), (-1, 1)]
-            for d in direction:
+            directions = [(-1, -1), (-1, 0), (-2, 0), (-1, 1)]
+            for d in directions:
                 calc_y = src[0] + d[0]
                 calc_x = src[1] + d[1]
                 if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                     if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
                             (calc_y, calc_x)) != self.turn_player:
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
         else:
-            direction = [(1, -1), (1, 0), (2, 0), (1, 1)]
-            for d in direction:
+            directions = [(1, -1), (1, 0), (2, 0), (1, 1)]
+            for d in directions:
                 calc_y = src[0] + d[0]
                 calc_x = src[1] + d[1]
                 if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                     if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     if d == (2, 0) and self.get_piece((calc_y, calc_x)) == "*" and src[0] == 1:
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
                             (calc_y, calc_x)) != self.turn_player:
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
+        return moves
 
-    def get_rook_moves(self, src):
+    def _get_rook_moves(self, src):
+        moves = []
         directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
         # Dim_y is chosen here because it is the biggest dimension
         # it requires some thought in order to be clear why it is like that
@@ -152,17 +162,19 @@ class Engine:
                 calc_x = src[1] + i * d[1]
                 if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                     if self.get_piece([calc_y, calc_x]) == "*":
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     elif self.get_color([calc_y, calc_x]) != self.turn_player:
                         # If an enemy piece is found in this direction break and check another direction
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                         break
                     else:
                         break
                 else:
                     break
+        return moves
 
-    def get_knight_moves(self, src):
+    def _get_knight_moves(self, src):
+        moves = []
         directions = [(-2, -1), (-1, -2), (2, -1), (1, -2), (2, 1), (1, 2), (-2, 1), (-1, 2)]
         for d in directions:
             calc_y = src[0] + d[0]
@@ -170,10 +182,12 @@ class Engine:
             if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                 # Knight only cares about the landing square
                 if self.get_color([calc_y, calc_x]) != self.turn_player:
-                    self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                    moves.append(((src[0], src[1]), (calc_y, calc_x)))
+        return moves
 
     # Same as rook only thing that changes is the direction of motion.
-    def get_bishop_moves(self, src):
+    def _get_bishop_moves(self, src):
+        moves = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
         for d in directions:
             for i in range(1, self.dim_y):
@@ -181,31 +195,56 @@ class Engine:
                 calc_x = src[1] + i * d[1]
                 if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                     if self.get_piece([calc_y, calc_x]) == "*":
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     elif self.get_color([calc_y, calc_x]) != self.turn_player:
                         # If an enemy piece is found in this direction break and check another direction
-                        self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
                         break
                     else:
                         break
                 else:
                     break
+        return moves
 
-    def get_king_moves(self, src):
+    def _get_king_moves(self, src):
+        moves = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
         for d in directions:
             calc_y = src[0] + d[0]
             calc_x = src[1] + d[1]
             if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                 if self.get_color([calc_y, calc_x]) != self.turn_player:
-                    self.available_moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                    moves.append(((src[0], src[1]), (calc_y, calc_x)))
+        return moves
 
-    def get_queen_moves(self, src):
-        self.get_rook_moves(src)
-        self.get_bishop_moves(src)
+    def _get_queen_moves(self, src):
+        moves = [self._get_rook_moves(src), self._get_bishop_moves(src)]
+        # Remove empty moves
+        moves = [x for x in moves if x]
+        # Flatten the list of moves
+        moves = list(itertools.chain(*moves))
+        return moves
 
     def get_color(self, src):
         return self.board[src[0]][src[1]][0]
 
     def get_piece(self, src):
         return self.board[src[0]][src[1]][1]
+
+    def is_king(self, src):
+        return True if self.get_piece((src[0], src[1])) == "k" else False
+
+    def is_queen(self, src):
+        return True if self.get_piece((src[0], src[1])) == "q" else False
+
+    def is_rook(self, src):
+        return True if self.get_piece((src[0], src[1])) == "r" else False
+
+    def is_bishop(self, src):
+        return True if self.get_piece((src[0], src[1])) == "b" else False
+
+    def is_knight(self, src):
+        return True if self.get_piece((src[0], src[1])) == "n" else False
+
+    def is_pawn(self, src):
+        return True if self.get_piece((src[0], src[1])) == "p" else False

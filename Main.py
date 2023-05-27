@@ -7,6 +7,9 @@ pieces = ["br", "bn", "bb", "bq", "bk", "bp", "wr", "wn", "wb", "wq", "wk", "wp"
 
 img = {}
 
+img_x = 60
+img_y = 60
+
 # Colors for the chessboard
 colors = [pygame.Color([240, 217, 181, 255]), pygame.Color([181, 136, 99, 255])]
 
@@ -36,27 +39,31 @@ def main():
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
-        window_width = 256
-        window_height = 320
         dim_x = 4
         dim_y = 5
+        # window_width = 2 * dim_x * img_x
+        window_width = dim_x * img_x
+        window_height = dim_y * img_y
     elif board_choice == "LosAlamos":
-        window_width = 384
-        window_height = 384
         dim_x = 6
         dim_y = 6
+        # window_width = 2 * dim_x * img_x
+        window_width = dim_x * img_x
+        window_height = dim_y * img_y
     else:
         board_choice = "Normal"
-        window_width = 512
-        window_height = 512
         dim_x = 8
         dim_y = 8
+        # window_width = 2 * dim_x * img_x
+        window_width = dim_x * img_x
+        window_height = dim_y * img_y
 
     # Making piece's size proportional to the screen size.
     square_width = window_width // dim_x
     square_height = window_height // dim_y
 
     # Loading piece's images from the disk.
+    # load_assets(square_width / 2, square_height)
     load_assets(square_width, square_height)
 
     # Initialising the screen.
@@ -77,30 +84,36 @@ def main():
                 running = False
             elif e.type == pygame.MOUSEBUTTONDOWN:
                 cords = pygame.mouse.get_pos()
+                # cords_x = 2 * cords[0] // square_width
                 cords_x = cords[0] // square_width
                 cords_y = cords[1] // square_height
-                # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
-                # => reset dst, src
-                if src == [cords_y, cords_x] or (my_engine.board[cords_y][cords_x] == "**" and total_clicks == 0):
-                    dst.clear()
-                    src.clear()
-                    total_clicks = 0
-                elif total_clicks == 0:
-                    src = [cords_y, cords_x]
-                    total_clicks += 1
-                elif total_clicks == 1:
-                    dst = [cords_y, cords_x]
-                    board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
-                    if my_engine.board_has_changed:
-                        # After making a move swap player.
-                        player = "b" if player == "w" else "w"
-                    dst.clear()
-                    src.clear()
-                    total_clicks = 0
+                # Check that the click is inside the chess board.
+                if 0 <= cords_x < dim_x and 0 <= cords_y < dim_y:
+                    # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
+                    # => reset dst, src
+                    if src == [cords_y, cords_x] or (my_engine.board[cords_y][cords_x] == "**" and total_clicks == 0):
+                        dst.clear()
+                        src.clear()
+                        total_clicks = 0
+                    elif total_clicks == 0:
+                        src = [cords_y, cords_x]
+                        total_clicks += 1
+                    elif total_clicks == 1:
+                        dst = [cords_y, cords_x]
+                        board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
+                        if my_engine.board_has_changed:
+                            # After making a move swap player.
+                            player = "b" if player == "w" else "w"
+                        dst.clear()
+                        src.clear()
+                        total_clicks = 0
 
         # Draw current board.
+        # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
+
         pygame.display.update()
+
         # Testing type moves
         # type_src = input("Src: ")
         # type_dst = input("Dst: ")
