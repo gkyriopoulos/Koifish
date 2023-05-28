@@ -12,6 +12,7 @@ img_y = 60
 
 # Colors for the chessboard
 colors = [pygame.Color([240, 217, 181, 255]), pygame.Color([181, 136, 99, 255])]
+highlight_colors = pygame.Color([164, 212, 129, 255])
 
 
 # Function that loads piece images from the disk.
@@ -24,13 +25,20 @@ def load_assets(piece_width, piece_height):
 def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
     for i in range(dim_x):
         for j in range(dim_y):
-            # Coloring the board
             color_index = (i + j) % 2
             pygame.draw.rect(screen, colors[color_index],
                              pygame.Rect(i * square_width, j * square_height, square_width, square_height))
             piece = board[j][i]
             if piece != "**":
                 screen.blit(img[piece], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
+
+
+def draw_highlights(screen, square_width, square_height, squares):
+    for square in squares:
+        pygame.draw.circle(screen, highlight_colors
+                           , (square_width * square[1][1] + square_width / 2
+                              , square_height * square[1][0] + square_height / 2)
+                           , 10)
 
 
 def main():
@@ -70,10 +78,12 @@ def main():
     screen = pygame.display.set_mode((window_width, window_height))
 
     my_engine = Engine.Engine(board_choice)
+
     board = my_engine.board
 
     src = []
     dst = []
+    highlighted_moves = []
     total_clicks = 0
     player = "w"
     # Opening the window.
@@ -89,6 +99,7 @@ def main():
                 cords_y = cords[1] // square_height
                 # Check that the click is inside the chess board.
                 if 0 <= cords_x < dim_x and 0 <= cords_y < dim_y:
+                    highlighted_moves = []
                     # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
                     # => reset dst, src
                     if src == [cords_y, cords_x] or (my_engine.board[cords_y][cords_x] == "**" and total_clicks == 0):
@@ -98,6 +109,11 @@ def main():
                     elif total_clicks == 0:
                         src = [cords_y, cords_x]
                         total_clicks += 1
+                        # TODO: Highlight squares this should be changed to .legal_moves at a later stage.
+                        legal_moves = my_engine.available_moves
+                        selected_moves = my_engine.get_pieces_moves(src, my_engine.get_piece(src), player)
+                        highlighted_moves = set(legal_moves).intersection(selected_moves)
+                        pygame.display.flip()
                     elif total_clicks == 1:
                         dst = [cords_y, cords_x]
                         board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
@@ -111,6 +127,8 @@ def main():
         # Draw current board.
         # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
+        if highlighted_moves:
+            draw_highlights(screen, square_width, square_height, highlighted_moves)
 
         pygame.display.update()
 
