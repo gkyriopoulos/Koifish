@@ -28,11 +28,14 @@ class Engine:
         ["wr", "wb", "wn", "wk"]]
 
     _boardTest = [
-        ["bk", "**", "**", "**"],
-        ["bp", "bp", "**", "**"],
-        ["**", "**", "**", "**"],
-        ["**", "**", "wp", "wp"],
-        ["**", "**", "**", "wk"]]
+        ["**", "**", "**", "**", "bk", "**", "**", "**"],
+        ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["**", "**", "wq", "**", "**", "**", "wb", "**"],
+        ["**", "**", "**", "**", "wr", "**", "**", "**"],
+        ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["**", "**", "**", "**", "wk", "**", "**", "**"]]
 
     _microChessMoves = {
         "a1": (0, 4), "a2": (0, 3), "a3": (0, 2), "a4": (0, 1), "a5": (0, 0),
@@ -63,7 +66,7 @@ class Engine:
             self.rook_small_b = (0, 5)
             self.rook_big_b = (0, 0)
         else:
-            self.board = self._boardNormal
+            self.board = self._boardTest
             self.dim_x = 8
             self.dim_y = 8
             self.king_pos_b = [0, 4]
@@ -77,8 +80,9 @@ class Engine:
         #  start with handicap, just and idea for now.
         self.score = 0
         self.turn_player = "w"
-        self.available_moves = []
-        self._generate_available_moves()
+        self.pseudolegal_moves = []
+        self.threatmap = []
+        self._generate_pseudolegal_moves(self.turn_player)
         # I use this to player swap in player vs player mode it's probably not need.
         self.board_has_changed = False
         self.pieces = ["r", "n", "b", "q", "k", "p"]
@@ -94,7 +98,7 @@ class Engine:
 
     def attempt_move(self, src, dst, player):
         # TODO: Change to .legal_moves
-        if (src, dst) in self.available_moves:
+        if (src, dst) in self.pseudolegal_moves:
             self._make_move(src, dst, player)
             return self.board
         else:
@@ -117,34 +121,42 @@ class Engine:
         # Swaps the player and calculates legal moves for the next player.
         self.turn_player = "b" if self.turn_player == "w" else "w"
         self.board_has_changed = True
-        self.available_moves.clear()
+        self.pseudolegal_moves.clear()
+        self.threatmap.clear()
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
-        self.generate_legal_moves()
+        self.generate_legal_moves(self.turn_player)
         return self.board
 
-    def generate_legal_moves(self):
-        print(self.turn_player)
-        self._generate_available_moves()
+    def generate_legal_moves(self, color):
+        self._generate_pseudolegal_moves(color)
         checkers = self._check_check(self.turn_player)
+        print(self.turn_player)
+        print("Turn's player checks: ")
         print(checkers)
 
-    def _generate_available_moves(self):
+    def _generate_pseudolegal_moves(self, color):
         for i in range(self.dim_x):
             for j in range(self.dim_y):
-                color = self.get_color((j, i))
-                if color == self.turn_player:
-                    moves = self._get_moves((j, i))
-                    self.available_moves.append(moves)
+                piece_color = self.get_color((j, i))
+                enemy_color = "b" if color == "w" else "w"
+                if piece_color == color:
+                    moves = self._get_moves((j, i), color)
+                    self.pseudolegal_moves.append(moves)
+                elif piece_color == enemy_color:
+                    threatmap = self._get_threatmap((j, i), piece_color)
+                    self.threatmap.append(threatmap)
         # Remove empty moves
-        self.available_moves = [x for x in self.available_moves if x]
+        self.pseudolegal_moves = [x for x in self.pseudolegal_moves if x]
+        self.threatmap = [x for x in self.threatmap if x]
         # Flatten the list of moves
-        self.available_moves = list(itertools.chain(*self.available_moves))
+        self.pseudolegal_moves = list(itertools.chain(*self.pseudolegal_moves))
+        self.threatmap = list(itertools.chain(*self.threatmap))
 
     # Access a location on the board finds if there is a piece on it and depending on the piece's type
-    # get its moves
-    def _get_moves(self, src):
-        color = self.get_color((src[0], src[1]))
+    # get its moves it also returns the threat-map for each piece (ray pieces(rook,bishop)) use a different function
+    # for the threat-map calculation
+    def _get_moves(self, src, color):
         if self.is_pawn((src[0], src[1])):
             return self._get_pawn_moves((src[0], src[1]), color)
         elif self.is_rook((src[0], src[1])):
@@ -158,7 +170,7 @@ class Engine:
         elif self.is_queen((src[0], src[1])):
             return self._get_queen_moves((src[0], src[1]))
 
-    # Theoretically finds a piece's moves given it's location. This function doesn't use the board.
+    # Theoretically finds a piece's moves given its location. This function doesn't use the board.
     # Think of as: If I place a piece on (y,x) square what would be the available moves ?
     def get_pieces_moves(self, src, piece, color):
         if piece == "p":
@@ -278,6 +290,95 @@ class Engine:
         # Flatten the list of moves
         moves = list(itertools.chain(*moves))
         return moves
+
+    # Threat maps for non ray pieces are the same as their moves.
+    def _get_threatmap(self, src, color):
+        if self.is_pawn((src[0], src[1])):
+            return self._get_pawn_moves((src[0], src[1]), color)
+        if self.is_rook((src[0], src[1])):
+            return self._get_rook_threatmap((src[0], src[1]))
+        elif self.is_knight((src[0], src[1])):
+            return self._get_knight_moves((src[0], src[1]))
+        elif self.is_bishop((src[0], src[1])):
+            return self._get_bishop_threatmap((src[0], src[1]))
+        elif self.is_king((src[0], src[1])):
+            return self._get_king_moves((src[0], src[1]))
+        elif self.is_queen((src[0], src[1])):
+            return self._get_queen_threatmap((src[0], src[1]))
+
+    def _get_rook_threatmap(self, src):
+        # Getting our kings cords
+        # Take a minute to think about it when we are white for example we need see when black attacks our king!!!
+        if self.turn_player == "w":
+            temp_king = self.king_pos_w
+            enemy_player = "b"
+            piece = "wk"
+        else:
+            temp_king = self.king_pos_b
+            enemy_player = "w"
+            piece = "bk"
+        # Temporarily removing our king from the board
+        self.board[temp_king[0]][temp_king[1]] = "**"
+        threatmap = []
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        for d in directions:
+            for i in range(1, self.dim_y):
+                calc_y = src[0] + i * d[0]
+                calc_x = src[1] + i * d[1]
+                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                    if self.get_piece([calc_y, calc_x]) == "*":
+                        threatmap.append(((src[0], src[1]), (calc_y, calc_x)))
+                    # Also I changed this we need to check enemy_player
+                    elif self.get_color([calc_y, calc_x]) != enemy_player:
+                        threatmap.append(((src[0], src[1]), (calc_y, calc_x)))
+                        break
+                    else:
+                        break
+                else:
+                    break
+        # Restoring our king to his original place
+        self.board[temp_king[0]][temp_king[1]] = piece
+        return threatmap
+
+    def _get_bishop_threatmap(self, src):
+        if self.turn_player == "w":
+            temp_king = self.king_pos_w
+            enemy_player = "b"
+            piece = "wk"
+        else:
+            temp_king = self.king_pos_b
+            enemy_player = "w"
+            piece = "bk"
+        # Temporarily removing our king from the board
+        self.board[temp_king[0]][temp_king[1]] = "**"
+        threatmap = []
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        for d in directions:
+            for i in range(1, self.dim_y):
+                calc_y = src[0] + i * d[0]
+                calc_x = src[1] + i * d[1]
+                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                    if self.get_piece([calc_y, calc_x]) == "*":
+                        threatmap.append(((src[0], src[1]), (calc_y, calc_x)))
+                    # Also I changed this we need to check enemy_player
+                    elif self.get_color([calc_y, calc_x]) != enemy_player:
+                        threatmap.append(((src[0], src[1]), (calc_y, calc_x)))
+                        break
+                    else:
+                        break
+                else:
+                    break
+        # Restoring our king to his original place
+        self.board[temp_king[0]][temp_king[1]] = piece
+        return threatmap
+
+    def _get_queen_threatmap(self, src):
+        threatmap = [self._get_rook_threatmap(src), self._get_bishop_threatmap(src)]
+        # Remove empty moves
+        threatmap = [x for x in threatmap if x]
+        # Flatten the list of moves
+        threatmap = list(itertools.chain(*threatmap))
+        return threatmap
 
     # Just check's if there is a check I thought I sounded funny xD
     # Check is the player->color has any checks. And returns checking piece's position.

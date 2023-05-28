@@ -110,7 +110,7 @@ def main():
                         src = [cords_y, cords_x]
                         total_clicks += 1
                         # TODO: Highlight squares this should be changed to .legal_moves at a later stage.
-                        legal_moves = my_engine.available_moves
+                        legal_moves = my_engine.pseudolegal_moves
                         selected_moves = my_engine.get_pieces_moves(src, my_engine.get_piece(src), player)
                         highlighted_moves = set(legal_moves).intersection(selected_moves)
                         pygame.display.flip()
@@ -127,8 +127,10 @@ def main():
         # Draw current board.
         # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
-        if highlighted_moves:
-            draw_highlights(screen, square_width, square_height, highlighted_moves)
+
+        draw_highlights(screen, square_width, square_height, my_engine.threatmap)
+        # if highlighted_moves:
+        # draw_highlights(screen, square_width, square_height, highlighted_moves)
 
         pygame.display.update()
 
