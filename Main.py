@@ -3,6 +3,8 @@ import pygame.display
 import pygame.draw_py
 import Engine
 
+pygame.init()
+
 pieces = ["br", "bn", "bb", "bq", "bk", "bp", "wr", "wn", "wb", "wq", "wk", "wp"]
 
 img = {}
@@ -13,6 +15,8 @@ img_y = 60
 # Colors for the chessboard
 colors = [pygame.Color([240, 217, 181, 255]), pygame.Color([181, 136, 99, 255])]
 highlight_colors = pygame.Color([164, 212, 129, 255])
+bg_colors = pygame.Color([49, 46, 43, 255])
+button_colors = [pygame.Color([65, 62, 57, 255]), pygame.Color([56, 53, 49, 255])]
 
 
 # Function that loads piece images from the disk.
@@ -39,6 +43,24 @@ def draw_highlights(screen, square_width, square_height, squares):
                            , (square_width * square[1][1] + square_width / 2
                               , square_height * square[1][0] + square_height / 2)
                            , 10)
+
+
+def draw_threatmap(screen, square_width, square_height, squares):
+    for square in squares:
+        font = pygame.font.SysFont('Sans-serif', int(40), bold=False)
+        surf = font.render('X', True, 'Red')
+        surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
+                                          square_height * square[0] + (square_height / 2)))
+        screen.blit(surf, surf_rect)
+
+
+def draw_threatmap_button(screen, color, length, center, pos):
+    font = pygame.font.SysFont('Sans-serif', int(30), bold=False)
+    surf = font.render('Show Threatmap', True, 'white')
+    surf_rect = surf.get_rect(center=(center[0], center[1]))
+    button = pygame.Rect(pos[0], pos[1], length[0], length[1])
+    pygame.draw.rect(screen, color, button)
+    screen.blit(surf, surf_rect)
 
 
 def main():
@@ -76,6 +98,7 @@ def main():
 
     # Initialising the screen.
     screen = pygame.display.set_mode((window_width, window_height))
+    screen.fill(bg_colors)
 
     my_engine = Engine.Engine(board_choice)
 
@@ -84,8 +107,16 @@ def main():
     src = []
     dst = []
     highlighted_moves = []
+    threat_map = []
+    threat_map_clicks = 0
     total_clicks = 0
     player = "w"
+
+    # Button shit
+    # button_len = (220, 35)
+    # button_center = (window_width / 2 + window_width / 4, window_height/10)
+    # button_pos = (button_center[0] - button_len[0] / 2, button_center[1] - button_len[1] / 2)
+
     # Opening the window.
     running = True
     while running:
@@ -93,29 +124,53 @@ def main():
             if e.type == pygame.QUIT:
                 running = False
             elif e.type == pygame.MOUSEBUTTONDOWN:
-                cords = pygame.mouse.get_pos()
-                # cords_x = 2 * cords[0] // square_width
-                cords_x = cords[0] // square_width
-                cords_y = cords[1] // square_height
+                coords = pygame.mouse.get_pos()
                 # Check that the click is inside the chess board.
-                if 0 <= cords_x < dim_x and 0 <= cords_y < dim_y:
+                # coords_x = 2 * coords[0] // square_width
+                coords_x = coords[0] // square_width
+                coords_y = coords[1] // square_height
+                if 0 <= coords_x < dim_x and 0 <= coords_y < dim_y:
                     highlighted_moves = []
                     # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
                     # => reset dst, src
-                    if src == [cords_y, cords_x] or (my_engine.board[cords_y][cords_x] == "**" and total_clicks == 0):
+                    if src == [coords_y, coords_x] or (
+                            my_engine.board[coords_y][coords_x] == "**" and total_clicks == 0):
                         dst.clear()
                         src.clear()
                         total_clicks = 0
                     elif total_clicks == 0:
-                        src = [cords_y, cords_x]
+                        src = [coords_y, coords_x]
                         total_clicks += 1
-                        # TODO: Highlight squares this should be changed to .legal_moves at a later stage.
-                        legal_moves = my_engine.pseudolegal_moves
+                        legal_moves = my_engine.legal_moves
                         selected_moves = my_engine.get_pieces_moves(src, my_engine.get_piece(src), player)
                         highlighted_moves = set(legal_moves).intersection(selected_moves)
-                        pygame.display.flip()
+                        # Castling highlights gui stuff
+                        if ((7, 4), (7, 7)) in legal_moves and src == [7, 4]:
+                            highlighted_moves.add(((7, 4), (7, 5)))
+                            highlighted_moves.add(((7, 4), (7, 6)))
+                            highlighted_moves.add(((7, 4), (7, 7)))
+                        if ((0, 4), (0, 7)) in legal_moves and src == [0, 4]:
+                            highlighted_moves.add(((0, 4), (0, 5)))
+                            highlighted_moves.add(((0, 4), (0, 6)))
+                            highlighted_moves.add(((0, 4), (0, 7)))
+                        if ((7, 4), (7, 0)) in legal_moves and src == [7, 4]:
+                            highlighted_moves.add(((7, 4), (7, 3)))
+                            highlighted_moves.add(((7, 4), (7, 2)))
+                            highlighted_moves.add(((7, 4), (7, 1)))
+                            highlighted_moves.add(((7, 4), (7, 0)))
+                        if ((0, 4), (0, 0)) in legal_moves and src == [0, 4]:
+                            highlighted_moves.add(((0, 4), (0, 3)))
+                            highlighted_moves.add(((0, 4), (0, 2)))
+                            highlighted_moves.add(((0, 4), (0, 1)))
+                            highlighted_moves.add(((0, 4), (0, 0)))
                     elif total_clicks == 1:
-                        dst = [cords_y, cords_x]
+
+                        # Added because of a threatmap bug
+                        if threat_map_clicks == 1:
+                            threat_map = []
+                            threat_map_clicks = 0
+
+                        dst = [coords_y, coords_x]
                         board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
                         if my_engine.board_has_changed:
                             # After making a move swap player.
@@ -123,21 +178,46 @@ def main():
                         dst.clear()
                         src.clear()
                         total_clicks = 0
+                # Threatmap button shit
+                # if button_pos[0] <= coords[0] <= button_pos[0] + button_len[0] and button_pos[1] <= coords[1] <= \
+                #         button_pos[1] + button_len[1]:
+                #     if threat_map_clicks == 0:
+                #         threat_map = my_engine.threatmap
+                #         threat_map_clicks += 1
+                #     else:
+                #         threat_map = []
+                #         threat_map_clicks = 0
+            elif e.type == pygame.KEYDOWN:
+                if e.key == pygame.K_t:
+                    if threat_map_clicks == 0:
+                        threat_map = my_engine.threatmap
+                        threat_map_clicks += 1
+                    else:
+                        threat_map = []
+                        threat_map_clicks = 0
+
+        # Threatmap button shit
+        # x, y = pygame.mouse.get_pos()
+        # if button_pos[0] <= x <= button_pos[0] + button_len[0] and button_pos[1] <= y <= button_pos[1] + button_len[1]:
+        #     draw_threatmap_button(screen, button_colors[0], button_len, button_center, button_pos)
+        # else:
+        #     draw_threatmap_button(screen, button_colors[1], button_len, button_center, button_pos)
 
         # Draw current board.
         # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
         draw_board(screen, board, dim_x, dim_y, square_width, square_height)
 
-        draw_highlights(screen, square_width, square_height, my_engine.threatmap)
         # if highlighted_moves:
-        # draw_highlights(screen, square_width, square_height, highlighted_moves)
+        # draw_highlights(screen, square_width / 2, square_height, highlighted_moves)
+        if highlighted_moves:
+            draw_highlights(screen, square_width, square_height, highlighted_moves)
+
+        # if threat_map:
+        #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
+        if threat_map:
+            draw_threatmap(screen, square_width, square_height, threat_map)
 
         pygame.display.update()
-
-        # Testing type moves
-        # type_src = input("Src: ")
-        # type_dst = input("Dst: ")
-        # my_engine.type_move(type_src, type_dst)
 
 
 if __name__ == "__main__":
