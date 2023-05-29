@@ -78,7 +78,7 @@ class Engine:
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
         else:
-            self.board = self._boardTest
+            self.board = self._boardNormal
             self.dim_x = 8
             self.dim_y = 8
             self.king_pos_b = [0, 4]
