@@ -47,7 +47,7 @@ def draw_highlights(screen, square_width, square_height, squares):
 
 def draw_threatmap(screen, square_width, square_height, squares):
     for square in squares:
-        font = pygame.font.SysFont('Sans-serif', int(40), bold=False)
+        font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
         surf = font.render('X', True, 'Red')
         surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
                                           square_height * square[0] + (square_height / 2)))
