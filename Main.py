@@ -63,6 +63,15 @@ def draw_threatmap_button(screen, color, length, center, pos):
     screen.blit(surf, surf_rect)
 
 
+def draw_pinray(screen, square_width, square_height, squares):
+    for square in squares:
+        font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
+        surf = font.render('X', True, 'Blue')
+        surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
+                                          square_height * square[0] + (square_height / 2)))
+        screen.blit(surf, surf_rect)
+
+
 def main():
     # Choices are Normal, LosAlamos, MicroChess
     board_choice = "Normal"
@@ -107,12 +116,14 @@ def main():
     src = []
     dst = []
     highlighted_moves = []
-    threat_map = []
-    threat_map_clicks = 0
+    threatmap = []
+    threatmap_clicks = 0
+    pinray = []
+    pinray_clicks = 0
     total_clicks = 0
     player = "w"
 
-    # Button shit
+    # Button stuff
     # button_len = (220, 35)
     # button_center = (window_width / 2 + window_width / 4, window_height/10)
     # button_pos = (button_center[0] - button_len[0] / 2, button_center[1] - button_len[1] / 2)
@@ -166,9 +177,14 @@ def main():
                     elif total_clicks == 1:
 
                         # Added because of a threatmap bug
-                        if threat_map_clicks == 1:
-                            threat_map = []
-                            threat_map_clicks = 0
+                        if threatmap_clicks == 1:
+                            threatmap = []
+                            threatmap_clicks = 0
+
+                        if pinray_clicks == 1:
+                            pinray = []
+                            pinray_clicks = 0
+
 
                         dst = [coords_y, coords_x]
                         board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
@@ -178,7 +194,7 @@ def main():
                         dst.clear()
                         src.clear()
                         total_clicks = 0
-                # Threatmap button shit
+                # Threatmap button stuff
                 # if button_pos[0] <= coords[0] <= button_pos[0] + button_len[0] and button_pos[1] <= coords[1] <= \
                 #         button_pos[1] + button_len[1]:
                 #     if threat_map_clicks == 0:
@@ -189,14 +205,22 @@ def main():
                 #         threat_map_clicks = 0
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_t:
-                    if threat_map_clicks == 0:
-                        threat_map = my_engine.threatmap
-                        threat_map_clicks += 1
+                    if threatmap_clicks == 0:
+                        threatmap = my_engine.threatmap
+                        threatmap_clicks += 1
                     else:
-                        threat_map = []
-                        threat_map_clicks = 0
+                        threatmap = []
+                        threatmap_clicks = 0
+                if e.key == pygame.K_p:
+                    if pinray_clicks == 0:
+                        # TODO: PINRAY DOESNT EXIST YET
+                        pinray = my_engine.pinrays
+                        pinray_clicks += 1
+                    else:
+                        pinray = []
+                        pinray_clicks = 0
 
-        # Threatmap button shit
+        # Threatmap button stuff
         # x, y = pygame.mouse.get_pos()
         # if button_pos[0] <= x <= button_pos[0] + button_len[0] and button_pos[1] <= y <= button_pos[1] + button_len[1]:
         #     draw_threatmap_button(screen, button_colors[0], button_len, button_center, button_pos)
@@ -214,8 +238,11 @@ def main():
 
         # if threat_map:
         #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
-        if threat_map:
-            draw_threatmap(screen, square_width, square_height, threat_map)
+        if threatmap:
+            draw_threatmap(screen, square_width, square_height, threatmap)
+
+        if pinray:
+            draw_pinray(screen, square_width, square_height, pinray)
 
         pygame.display.update()
 

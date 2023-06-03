@@ -29,12 +29,12 @@ class Engine:
 
     _boardTest = [
         ["br", "**", "**", "**", "bk", "**", "**", "br"],
-        ["wq", "**", "**", "**", "**", "**", "**", "wq"],
+        ["**", "**", "bb", "**", "bq", "**", "bb", "**"],
         ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["**", "**", "**", "**", "wp", "**", "**", "**"],
         ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["**", "**", "**", "wr", "**", "**", "**", "**"],
         ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["bq", "**", "**", "**", "**", "**", "**", "bq"],
         ["wr", "**", "**", "**", "wk", "**", "**", "wr"]]
 
     _microChessMoves = {
@@ -78,7 +78,7 @@ class Engine:
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
         else:
-            self.board = self._boardNormal
+            self.board = self._boardTest
             self.dim_x = 8
             self.dim_y = 8
             self.king_pos_b = [0, 4]
@@ -97,11 +97,13 @@ class Engine:
         # TODO: We have to create a function that checks the board and calculates the score in case you
         #  start with handicap, just and idea for now.
         self.pieces = ["r", "n", "b", "q", "k", "p"]
+        self.board_choice = board_choice
         self.score = 0
         self.turn_player = "w"
         self.pseudolegal_moves = []
         self.legal_moves = []
         self.threatmap = []
+        self.pinrays = []
         self.generate_legal_moves(self.turn_player)
         # I use this to player swap in player vs player mode it's probably not need.
         self.board_has_changed = False
@@ -190,6 +192,7 @@ class Engine:
         self.pseudolegal_moves.clear()
         self.threatmap.clear()
         self.legal_moves.clear()
+        self.pinrays.clear()
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
         self.generate_legal_moves(self.turn_player)
@@ -197,21 +200,26 @@ class Engine:
 
     def generate_legal_moves(self, color):
         self._generate_pseudolegal_moves(color)
-        self.legal_moves.append(self.pseudolegal_moves)
+        self.legal_moves = self.pseudolegal_moves
+        set_legal_moves = set(self.legal_moves)
 
         king_moves = self._get_king_moves(self._get_king_pos(color), color)
         set_king_moves = set([x[1] for x in self._get_king_moves(self._get_king_pos(color), color)])
         set_threatmap = set(self.threatmap)
-        king_illegal_moves = [i for i in king_moves if i[1] in (set_king_moves & set_threatmap)]
+        king_illegal_moves = set([i for i in king_moves if i[1] in (set_king_moves & set_threatmap)])
+        pinned, pin_axis_moves, self.pinrays = self.find_absolute_pins(color)
 
-        # Removing king's illegal moves.
-        self.legal_moves = list(set(self.pseudolegal_moves) - set(king_illegal_moves))
+        # Removing illegal moves.
+        for pin in pinned:
+            pinned_illegal_moves = set(self._get_moves(pin, color)) - set(pin_axis_moves)
+            set_legal_moves -= pinned_illegal_moves
 
-        # Gia ta pinned tha pernw thn thesi tous kai tha
-        # kanw remove apo to legal_moves osa exoun src to src tou pinned
+        set_legal_moves -= king_illegal_moves
 
-        castle_big_move = self._check_big_castle(color)
-        castle_small_move = self._check_small_castle(color)
+        self.legal_moves = list(set_legal_moves)
+
+        castle_big_move = self._big_castle_move(color)
+        castle_small_move = self._small_castle_move(color)
 
         self.legal_moves.append(castle_small_move)
         self.legal_moves.append(castle_big_move)
@@ -225,13 +233,13 @@ class Engine:
         elif len(checkers) == 1:
             if not self.legal_moves:
                 print("Checkmate")
+
         # else:
         #     # Flatten the list
         #     self.legal_moves = list(itertools.chain(*self.legal_moves))
         # Remove empty moves
 
         self.legal_moves = [x for x in self.legal_moves if x]
-
         if not self.legal_moves:
             print("Stalemate")
 
@@ -409,11 +417,11 @@ class Engine:
         elif self.is_rook((src[0], src[1])):
             return self._get_rook_threatmap((src[0], src[1]), color)
         elif self.is_knight((src[0], src[1])):
-            return self._get_knight_threatmap((src[0], src[1]), color)
+            return self._get_knight_threatmap((src[0], src[1]))
         elif self.is_bishop((src[0], src[1])):
             return self._get_bishop_threatmap((src[0], src[1]), color)
         elif self.is_king((src[0], src[1])):
-            return self._get_king_threatmap((src[0], src[1]), color)
+            return self._get_king_threatmap((src[0], src[1]))
         elif self.is_queen((src[0], src[1])):
             return self._get_queen_threatmap((src[0], src[1]), color)
 
@@ -473,7 +481,7 @@ class Engine:
         self.board[temp_king[0]][temp_king[1]] = piece
         return threatmap
 
-    def _get_knight_threatmap(self, src, color):
+    def _get_knight_threatmap(self, src):
         threatmap = []
         directions = [(-2, -1), (-1, -2), (2, -1), (1, -2), (2, 1), (1, 2), (-2, 1), (-1, 2)]
         for d in directions:
@@ -514,7 +522,7 @@ class Engine:
         self.board[temp_king[0]][temp_king[1]] = piece
         return threatmap
 
-    def _get_king_threatmap(self, src, color):
+    def _get_king_threatmap(self, src):
         threatmap = []
         directions = [(-1, -1), (-1, 1), (1, -1), (1, 1), (-1, 0), (1, 0), (0, -1), (0, 1)]
         for d in directions:
@@ -542,9 +550,9 @@ class Engine:
                     checkers.append(move[1])
         return checkers
 
-    def _check_small_castle(self, color):
+    def _small_castle_move(self, color):
         if color == "w":
-            if self._small_castle_available(color):
+            if self._check_small_castle(color):
                 if (7, 4) not in self.threatmap and \
                         (7, 5) not in self.threatmap and \
                         (7, 6) not in self.threatmap:
@@ -554,7 +562,7 @@ class Engine:
             else:
                 return []
         else:
-            if self._small_castle_available(color):
+            if self._check_small_castle(color):
                 if (0, 4) not in self.threatmap and \
                         (0, 5) not in self.threatmap and \
                         (0, 6) not in self.threatmap:
@@ -564,9 +572,9 @@ class Engine:
             else:
                 return []
 
-    def _check_big_castle(self, color):
+    def _big_castle_move(self, color):
         if color == "w":
-            if self._big_castle_available(color):
+            if self._check_big_castle(color):
                 if (7, 4) not in self.threatmap and \
                         (7, 1) not in self.threatmap and \
                         (7, 2) not in self.threatmap and \
@@ -577,7 +585,7 @@ class Engine:
             else:
                 return []
         else:
-            if self._big_castle_available(color):
+            if self._check_big_castle(color):
                 if (0, 4) not in self.threatmap and \
                         (0, 1) not in self.threatmap and \
                         (0, 2) not in self.threatmap and \
@@ -588,35 +596,43 @@ class Engine:
             else:
                 return []
 
-    def _big_castle_available(self, color):
-        if color == "w":
-            if not self.king_w_moved and not self.rook_big_w_moved and \
-                    self.board[7][1] == "**" and self.board[7][2] == "**" \
-                    and self.board[7][3] == "**":
-                return True
+    def _check_big_castle(self, color):
+        if self.board_choice == "Normal":
+            if color == "w":
+                if not self.king_w_moved and not self.rook_big_w_moved and \
+                        self.board[7][0] == "wr" and self.board[7][1] == "**" and \
+                        self.board[7][2] == "**" and self.board[7][3] == "**":
+                    return True
+                else:
+                    return False
             else:
-                return False
+                if not self.king_b_moved and not self.rook_big_b_moved and \
+                        self.board[0][0] == "br" and self.board[0][1] == "**" and \
+                        self.board[0][2] == "**" and self.board[0][3] == "**":
+                    return True
+                else:
+                    return False
         else:
-            if not self.king_b_moved and not self.rook_big_b_moved and \
-                    self.board[0][1] == "**" and self.board[0][2] == "**" \
-                    and self.board[0][3] == "**":
-                return True
-            else:
-                return False
+            return False
 
-    def _small_castle_available(self, color):
-        if color == "w":
-            if not self.king_w_moved and not self.rook_small_w_moved and \
-                    self.board[7][5] == "**" and self.board[7][6] == "**":
-                return True
+    def _check_small_castle(self, color):
+        if self.board_choice == "Normal":
+            if color == "w":
+                if not self.king_w_moved and not self.rook_small_w_moved and \
+                        self.board[7][7] == "wr" and self.board[7][5] == "**" \
+                        and self.board[7][6] == "**":
+                    return True
+                else:
+                    return False
             else:
-                return False
+                if not self.king_b_moved and not self.rook_small_b_moved and \
+                        self.board[0][7] == "br" and self.board[0][5] == "**" \
+                        and self.board[0][6] == "**":
+                    return True
+                else:
+                    return False
         else:
-            if not self.king_b_moved and not self.rook_small_b_moved and \
-                    self.board[0][5] == "**" and self.board[0][6] == "**":
-                return True
-            else:
-                return False
+            return False
 
     def get_color(self, src):
         return self.board[src[0]][src[1]][0]
@@ -651,8 +667,64 @@ class Engine:
     def _get_king_pos(self, color):
         return self.king_pos_b if color == "b" else self.king_pos_w
 
-    # TODO: Castling done testing left.
+    def find_absolute_pins(self, color):
+        king = self._get_king_pos(color)
+        enemy_color = "w" if color == "b" else "b"
+
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1),
+                      (-1, -1), (-1, 1), (1, -1), (1, 1)]
+
+        j = 0
+        pinned = []
+        pin_ray = []
+
+        biggest_dim = self.dim_y if self.dim_y >= self.dim_x else self.dim_x
+
+        for d in directions:
+            counter = 0
+            pinned.insert(j, [])
+            pin_ray.insert(j, [])
+            for i in range(1, biggest_dim):
+                calc_y = king[0] + i * d[0]
+                calc_x = king[1] + i * d[1]
+                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                    piece_color = self.get_color((calc_y, calc_x))
+                    piece = self.get_piece((calc_y, calc_x))
+                    if piece_color == color:
+                        if counter == 0:
+                            pinned[j].append((calc_y, calc_x))
+                            pin_ray[j].append((calc_y, calc_x))
+                            counter += 1
+                        elif counter == 1:
+                            pin_ray[j] = []
+                            pinned[j] = []
+                            break
+                    elif pinned[j] and piece_color == enemy_color and piece in ("b", "r", "q"):
+                        pinned[j].append((calc_y, calc_x))
+                        pin_ray[j].append((calc_y, calc_x))
+                        break
+                    else:
+                        pin_ray[j].append((calc_y, calc_x))
+                else:
+                    break
+
+            if len(pinned[j]) != 2:
+                pin_ray[j] = []
+                pinned[j] = []
+            j += 1
+
+        pinned = [x[0] for x in pinned if x]
+        pin_ray = [x for x in pin_ray if x]
+
+        pin_axis_moves = [[(pinned[i], element) for element in pin_ray[i]] for i in range(len(pinned))]
+
+        pin_ray = list(itertools.chain(*pin_ray))
+        pin_axis_moves = list(itertools.chain(*pin_axis_moves))
+
+        return pinned, pin_axis_moves, pin_ray
+
+    # TODO: Castling done some testing left.
+    # TODO: Pins done only some testing left.
     # TODO: If in check limit moves. Or if in double check only king can move.
-    # TODO: Pins.
     # TODO: En-passant and en-passant checks.
     # TODO: Repetition stalemates and stuff.
