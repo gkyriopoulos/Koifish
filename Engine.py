@@ -99,11 +99,13 @@ class Engine:
         self.pieces = ["r", "n", "b", "q", "k", "p"]
         self.board_choice = board_choice
         self.score = 0
+        self.winner = "None"
         self.turn_player = "w"
         self.pseudolegal_moves = []
         self.legal_moves = []
         self.threatmap = []
         self.pinrays = []
+        self.checkers = []
         self.generate_legal_moves(self.turn_player)
         # I use this to player swap in player vs player mode it's probably not need.
         self.board_has_changed = False
@@ -118,15 +120,16 @@ class Engine:
         return [move_y, move_x]
 
     def attempt_move(self, src, dst, player):
-        # print(self.legal_moves)
-        # print(src, dst)
 
-        if (src, dst) in self.legal_moves:
-            self._make_move(src, dst, player)
-            return self.board
+        if self.winner == "None":
+            if (src, dst) in self.legal_moves:
+                self._make_move(src, dst, player)
+                return self.board
+            else:
+                self.board_has_changed = False
+                return self.board
         else:
-            self.board_has_changed = False
-            return self.board
+            return self.winner
 
     def _make_move(self, src, dst, player):
 
@@ -135,6 +138,7 @@ class Engine:
             self.board_has_changed = False
             return self.board
 
+        # In case we have castling.
         if player == "w":
             if self.is_king(src):
                 self._set_king_pos(dst, player)
@@ -193,55 +197,65 @@ class Engine:
         self.threatmap.clear()
         self.legal_moves.clear()
         self.pinrays.clear()
+        self.checkers.clear()
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
         self.generate_legal_moves(self.turn_player)
-        return self.board
 
     def generate_legal_moves(self, color):
+
+        # Generating the pseudo legal moves
         self._generate_pseudolegal_moves(color)
         self.legal_moves = self.pseudolegal_moves
-        set_legal_moves = set(self.legal_moves)
+        legal_moves_set = set(self.legal_moves)
 
         king_moves = self._get_king_moves(self._get_king_pos(color), color)
-        set_king_moves = set([x[1] for x in self._get_king_moves(self._get_king_pos(color), color)])
-        set_threatmap = set(self.threatmap)
-        king_illegal_moves = set([i for i in king_moves if i[1] in (set_king_moves & set_threatmap)])
-        pinned, pin_axis_moves, self.pinrays = self.find_absolute_pins(color)
+        king_moves_set = set([x[1] for x in king_moves])
+        threatmap_set = set(self.threatmap)
+        king_illegal_moves = set([x for x in king_moves if x[1] in (king_moves_set & threatmap_set)])
+        pins, pin_axis_moves, self.pinrays = self._get_absolute_pins(color)
 
-        # Removing illegal moves.
-        for pin in pinned:
+        # Removing the illegal moves.
+        for pin in pins:
             pinned_illegal_moves = set(self._get_moves(pin, color)) - set(pin_axis_moves)
-            set_legal_moves -= pinned_illegal_moves
+            legal_moves_set -= pinned_illegal_moves
 
-        set_legal_moves -= king_illegal_moves
+        legal_moves_set -= king_illegal_moves
 
-        self.legal_moves = list(set_legal_moves)
+        self.legal_moves = list(legal_moves_set)
 
+        # Adding the castle moves if they exist
         castle_big_move = self._big_castle_move(color)
         castle_small_move = self._small_castle_move(color)
 
-        self.legal_moves.append(castle_small_move)
-        self.legal_moves.append(castle_big_move)
+        if castle_big_move:
+            self.legal_moves.append(castle_big_move)
 
-        checkers = self._check_check(color)
-        if len(checkers) > 1:
-            king_legal_moves = [i for i in king_moves if i[1] not in (set_king_moves & set_threatmap)]
+        if castle_small_move:
+            self.legal_moves.append(castle_small_move)
+
+        self.checkers = self._check_check(color)
+        if len(self.checkers) > 1:
+            king_legal_moves = [x for x in king_moves if x[1] not in (king_moves_set & threatmap_set)]
             self.legal_moves = king_legal_moves
             if not self.legal_moves:
-                print("Checkmate")
-        elif len(checkers) == 1:
+                self.winner = "w" if color == "b" else "b"
+                return
+        elif len(self.checkers) == 1:
+            checker_captures = set([x for x in self.legal_moves if x[1] == self.checkers[0]])
+            king_legal_moves = set([x for x in king_moves if x[1] not in (king_moves_set & threatmap_set)])
+            squares_between_king_and_checker = self._get_squares_between(self._get_king_pos(color), self.checkers[0])
+            push_moves = set([x for x in self.legal_moves if x[1] in squares_between_king_and_checker])
+            self.legal_moves = checker_captures | king_legal_moves | push_moves
             if not self.legal_moves:
-                print("Checkmate")
+                self.winner = "w" if color == "b" else "b"
+                return
 
-        # else:
-        #     # Flatten the list
-        #     self.legal_moves = list(itertools.chain(*self.legal_moves))
         # Remove empty moves
-
         self.legal_moves = [x for x in self.legal_moves if x]
+
         if not self.legal_moves:
-            print("Stalemate")
+            self.winner = "d"
 
     def _generate_pseudolegal_moves(self, color):
         for i in range(self.dim_x):
@@ -285,8 +299,8 @@ class Engine:
         elif self.is_queen((src[0], src[1])):
             return self._get_queen_moves((src[0], src[1]), color)
 
-    # Theoretically finds a piece's moves given its location. This function doesn't use the board.
-    # Think of as: If I place a piece on (y,x) square what would be the available moves ?
+    # Theoretically finds a piece's moves given its location.
+    # Think of as: If I place x piece on a square what would be the available moves in the current board?
     def get_pieces_moves(self, src, piece, color):
         if piece == "p":
             return self._get_pawn_moves(src, color)
@@ -667,7 +681,7 @@ class Engine:
     def _get_king_pos(self, color):
         return self.king_pos_b if color == "b" else self.king_pos_w
 
-    def find_absolute_pins(self, color):
+    def _get_absolute_pins(self, color):
         king = self._get_king_pos(color)
         enemy_color = "w" if color == "b" else "b"
 
@@ -675,14 +689,14 @@ class Engine:
                       (-1, -1), (-1, 1), (1, -1), (1, 1)]
 
         j = 0
-        pinned = []
+        pins = []
         pin_ray = []
 
         biggest_dim = self.dim_y if self.dim_y >= self.dim_x else self.dim_x
 
         for d in directions:
             counter = 0
-            pinned.insert(j, [])
+            pins.insert(j, [])
             pin_ray.insert(j, [])
             for i in range(1, biggest_dim):
                 calc_y = king[0] + i * d[0]
@@ -692,39 +706,75 @@ class Engine:
                     piece = self.get_piece((calc_y, calc_x))
                     if piece_color == color:
                         if counter == 0:
-                            pinned[j].append((calc_y, calc_x))
+                            pins[j].append((calc_y, calc_x))
                             pin_ray[j].append((calc_y, calc_x))
                             counter += 1
                         elif counter == 1:
                             pin_ray[j] = []
-                            pinned[j] = []
+                            pins[j] = []
                             break
-                    elif pinned[j] and piece_color == enemy_color and piece in ("b", "r", "q"):
-                        pinned[j].append((calc_y, calc_x))
-                        pin_ray[j].append((calc_y, calc_x))
-                        break
+                    elif pins[j] and piece_color == enemy_color:
+                        if piece in ("b", "r", "q"):
+                            # If the enemy piece is a rook at the direction we are looking at
+                            # is a straight line
+                            if piece == "r" and d in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                                pins[j].append((calc_y, calc_x))
+                                pin_ray[j].append((calc_y, calc_x))
+                                break
+                            # If the enemy piece is a bishop at the direction we are looking at
+                            # is a diagonal
+                            elif piece == "b" and d in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
+                                pins[j].append((calc_y, calc_x))
+                                pin_ray[j].append((calc_y, calc_x))
+                                break
+                            elif piece == "q":
+                                pins[j].append((calc_y, calc_x))
+                                pin_ray[j].append((calc_y, calc_x))
+                                break
+                            else:
+                                break
+                        else:
+                            break
                     else:
                         pin_ray[j].append((calc_y, calc_x))
                 else:
                     break
-
-            if len(pinned[j]) != 2:
+            # If you didn't find a pin
+            if len(pins[j]) != 2:
                 pin_ray[j] = []
-                pinned[j] = []
+                pins[j] = []
             j += 1
 
-        pinned = [x[0] for x in pinned if x]
+        pins = [x[0] for x in pins if x]
         pin_ray = [x for x in pin_ray if x]
 
-        pin_axis_moves = [[(pinned[i], element) for element in pin_ray[i]] for i in range(len(pinned))]
+        pin_axis_moves = [[(pins[i], element) for element in pin_ray[i]] for i in range(len(pins))]
 
         pin_ray = list(itertools.chain(*pin_ray))
         pin_axis_moves = list(itertools.chain(*pin_axis_moves))
 
-        return pinned, pin_axis_moves, pin_ray
+        return pins, pin_axis_moves, pin_ray
 
-    # TODO: Castling done some testing left.
-    # TODO: Pins done only some testing left.
-    # TODO: If in check limit moves. Or if in double check only king can move.
+    def _get_squares_between(self, src, dst):
+        direction = [dst[0] - src[0], dst[1] - src[1]]
+        max_val = max([abs(direction[0]), abs(direction[1])])
+        direction = [int(d / max_val) for d in direction]
+        biggest_dim = self.dim_y if self.dim_y >= self.dim_x else self.dim_x
+        piece = self.get_piece(dst)
+        squares = []
+        for i in range(1, biggest_dim):
+            calc_y = src[0] + i * direction[0]
+            calc_x = src[1] + i * direction[1]
+            if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                if self.get_piece((calc_y, calc_x)) == piece:
+                    break
+                else:
+                    squares.append((calc_y, calc_x))
+
+        return squares
+
+    # TODO: DONE: Castling some testing left.
+    # TODO: DONE: Pins only some testing left.
+    # TODO: DONE: If in check limit moves. Or if in double check only king can move.
     # TODO: En-passant and en-passant checks.
     # TODO: Repetition stalemates and stuff.

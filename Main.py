@@ -175,26 +175,26 @@ def main():
                             highlighted_moves.add(((0, 4), (0, 1)))
                             highlighted_moves.add(((0, 4), (0, 0)))
                     elif total_clicks == 1:
-
                         # Added because of a threatmap bug
                         if threatmap_clicks == 1:
                             threatmap = []
                             threatmap_clicks = 0
-
                         if pinray_clicks == 1:
                             pinray = []
                             pinray_clicks = 0
 
-
                         dst = [coords_y, coords_x]
                         board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
+
                         if my_engine.board_has_changed:
                             # After making a move swap player.
                             player = "b" if player == "w" else "w"
+
                         dst.clear()
                         src.clear()
                         total_clicks = 0
-                # Threatmap button stuff
+
+                # Button stuff
                 # if button_pos[0] <= coords[0] <= button_pos[0] + button_len[0] and button_pos[1] <= coords[1] <= \
                 #         button_pos[1] + button_len[1]:
                 #     if threat_map_clicks == 0:
@@ -203,6 +203,7 @@ def main():
                 #     else:
                 #         threat_map = []
                 #         threat_map_clicks = 0
+
             elif e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_t:
                     if threatmap_clicks == 0:
@@ -213,36 +214,48 @@ def main():
                         threatmap_clicks = 0
                 if e.key == pygame.K_p:
                     if pinray_clicks == 0:
-                        # TODO: PINRAY DOESNT EXIST YET
                         pinray = my_engine.pinrays
                         pinray_clicks += 1
                     else:
                         pinray = []
                         pinray_clicks = 0
 
-        # Threatmap button stuff
+        # Button stuff
         # x, y = pygame.mouse.get_pos()
         # if button_pos[0] <= x <= button_pos[0] + button_len[0] and button_pos[1] <= y <= button_pos[1] + button_len[1]:
         #     draw_threatmap_button(screen, button_colors[0], button_len, button_center, button_pos)
         # else:
         #     draw_threatmap_button(screen, button_colors[1], button_len, button_center, button_pos)
-
-        # Draw current board.
         # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
-        draw_board(screen, board, dim_x, dim_y, square_width, square_height)
 
-        # if highlighted_moves:
-        # draw_highlights(screen, square_width / 2, square_height, highlighted_moves)
+        # If the game is not over draw the board.
+        if board == "b":
+            print("Black Wins!")
+            running = False
+        elif board == "w":
+            print("White Wins!")
+            running = False
+        elif board == "d":
+            print("Draw!")
+            running = False
+        else:
+            draw_board(screen, board, dim_x, dim_y, square_width, square_height)
+
         if highlighted_moves:
             draw_highlights(screen, square_width, square_height, highlighted_moves)
 
-        # if threat_map:
-        #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
         if threatmap:
             draw_threatmap(screen, square_width, square_height, threatmap)
 
         if pinray:
             draw_pinray(screen, square_width, square_height, pinray)
+
+        # if highlighted_moves:
+        # draw_highlights(screen, square_width / 2, square_height, highlighted_moves)
+        # if threat_map:
+        #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
+        # if pinray:
+        #     draw_threatmap(screen, square_width / 2, square_height, pinray)
 
         pygame.display.update()
 
