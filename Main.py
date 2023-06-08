@@ -186,6 +186,13 @@ def main():
                         dst = [coords_y, coords_x]
                         board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
 
+                        if board == "b":
+                            break
+                        elif board == "w":
+                            break
+                        elif board == "d":
+                            break
+
                         if my_engine.board_has_changed:
                             # After making a move swap player.
                             player = "b" if player == "w" else "w"

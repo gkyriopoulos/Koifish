@@ -3,7 +3,7 @@ import itertools
 
 class Engine:
     _boardNormal = [
-        ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
+        ["br", "br", "bb", "bq", "bk", "bb", "bn", "br"],
         ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
         ["**", "**", "**", "**", "**", "**", "**", "**"],
         ["**", "**", "**", "**", "**", "**", "**", "**"],
@@ -29,12 +29,12 @@ class Engine:
 
     _boardTest = [
         ["br", "**", "**", "**", "bk", "**", "**", "br"],
-        ["**", "**", "bb", "**", "bq", "**", "bb", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+        ["br", "br", "bb", "bq", "bk", "bb", "bn", "br"],
         ["**", "**", "**", "**", "wp", "**", "**", "**"],
         ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["**", "**", "**", "wr", "**", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
+        ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"],
+        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
         ["wr", "**", "**", "**", "wk", "**", "**", "wr"]]
 
     _microChessMoves = {
@@ -326,7 +326,8 @@ class Engine:
                 if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                     if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
                         moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                    if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
+                    if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
+                            and self.get_piece((calc_y+1, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
                         moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
                             (calc_y, calc_x)) != color:
@@ -339,7 +340,8 @@ class Engine:
                 if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                     if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
                         moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                    if d == (2, 0) and self.get_piece((calc_y, calc_x)) == "*" and src[0] == 1:
+                    if d == (2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
+                            and self.get_piece((calc_y-1, calc_x)) == "*" and src[0] == 1:
                         moves.append(((src[0], src[1]), (calc_y, calc_x)))
                     if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
                             (calc_y, calc_x)) != color:
@@ -756,22 +758,25 @@ class Engine:
         return pins, pin_axis_moves, pin_ray
 
     def _get_squares_between(self, src, dst):
-        direction = [dst[0] - src[0], dst[1] - src[1]]
-        max_val = max([abs(direction[0]), abs(direction[1])])
-        direction = [int(d / max_val) for d in direction]
-        biggest_dim = self.dim_y if self.dim_y >= self.dim_x else self.dim_x
-        piece = self.get_piece(dst)
-        squares = []
-        for i in range(1, biggest_dim):
-            calc_y = src[0] + i * direction[0]
-            calc_x = src[1] + i * direction[1]
-            if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
-                if self.get_piece((calc_y, calc_x)) == piece:
-                    break
-                else:
-                    squares.append((calc_y, calc_x))
+        if not self.is_knight(dst):
+            direction = [dst[0] - src[0], dst[1] - src[1]]
+            max_val = max([abs(direction[0]), abs(direction[1])])
+            direction = [int(d / max_val) for d in direction]
+            biggest_dim = self.dim_y if self.dim_y >= self.dim_x else self.dim_x
+            piece = self.get_piece(dst)
+            squares = []
+            for i in range(1, biggest_dim):
+                calc_y = src[0] + i * direction[0]
+                calc_x = src[1] + i * direction[1]
+                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                    if self.get_piece((calc_y, calc_x)) == piece:
+                        break
+                    else:
+                        squares.append((calc_y, calc_x))
 
-        return squares
+            return squares
+        else:
+            return []
 
     # TODO: DONE: Castling some testing left.
     # TODO: DONE: Pins only some testing left.
