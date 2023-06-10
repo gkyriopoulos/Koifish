@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pygame
 import pygame.display
 import pygame.draw_py
@@ -75,6 +76,10 @@ def draw_pinray(screen, square_width, square_height, squares):
 def main():
     # Choices are Normal, LosAlamos, MicroChess
     board_choice = "Normal"
+    
+    
+
+    
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
@@ -112,6 +117,14 @@ def main():
     my_engine = Engine.Engine(board_choice)
 
     board = my_engine.board
+    
+    ##Test fen decoder function
+    # fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+
+    # decoded_board = my_engine.decode_fen(fen)
+
+    # # Print the decoded board
+    # print(decoded_board)
 
     src = []
     dst = []
