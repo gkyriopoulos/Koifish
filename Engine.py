@@ -124,11 +124,8 @@ class Engine:
 
         if self.winner == "None":
             if (src, dst) in self.legal_moves:
-                self._make_move(src, dst, player)
                 self.previous_move = [src,dst]
-                print("previous move: %s" % self.previous_move)
-                print("previous move1: %s" % self.previous_move[1][0])
-                print("previous move1: %s" % self.previous_move[1][1])
+                self._make_move(src, dst, player)
                 return self.board
             else:
                 self.board_has_changed = False
@@ -197,8 +194,23 @@ class Engine:
             self._set_king_pos((7, 2), "w")
             self.king_w_moved = True
         else:
-            self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
-            self.board[src[0]][src[1]] = "**"
+            
+            #Care might conflict with pawn move forwards
+            if self.is_pawn(src) and self.get_piece(dst) == "*":
+                if player == "w":
+                    self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+                    self.board[src[0]][src[1]] = "**"
+                    self.board[dst[0]+1][dst[1]] = "**"
+                else:
+                    self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+                    self.board[src[0]][src[1]] = "**"
+                    self.board[dst[0]-1][dst[1]] = "**"
+                
+            else:
+                self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+                self.board[src[0]][src[1]] = "**"   
+            
+            
                 #Promotion stuff
             if player == "w":            
                     if self.is_pawn(dst) and dst[0] == 0 :
@@ -213,6 +225,9 @@ class Engine:
                             self.board[dst[0]][dst[1]] = "br"
                         else:
                             self.board[dst[0]][dst[1]] = "bq"
+                            
+                            
+            
                 
         # Swaps the player and calculates legal moves for the next player.
         self.turn_player = "b" if self.turn_player == "w" else "w"
@@ -384,30 +399,17 @@ class Engine:
                         if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
                                 (calc_y, calc_x)) != color:
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                        print("HereW")    
+                          
                                 
-                        if (d == (-1, -1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] -1)) == "p" ):
-                            print("Here2W")
-                            print("src[0]: ",src[0])
-                            print("src[1]: ",src[1])
-                            print("self.previous_move[1][0]: ",self.previous_move[1][0])
-                            print("self.previous_move[1][1]+1: ",self.previous_move[1][1]+1)
-                            # if tuple(a - b for a, b in zip(self.previous_move[0], (src[0],src[1]-1))) == (-2, 0) :
-                            #     print("Inside second if, appending2")
-                            #     moves.append(((src[0], src[1]), (calc_y, calc_x))) 
-                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if (d == (-1, -1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] -1)) == "p" ): 
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (-2,0)):
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
+
                         
                         if (d == (-1, 1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] +1)) == "p" ):
-                            print("Here1W")
-                            print("src[0]: ",src[0])
-                            print("src[1]: ",src[1])
-                            print("self.previous_move[1][0]: ",self.previous_move[1][0])
-                            print("self.previous_move[1][1]+1: ",self.previous_move[1][1]+1)
-                            # if tuple(a - b for a, b in zip(self.previous_move[0],(src[0],src[1]+1))) == (-2, 0) :
-                            #     print("Inside second if, appending1")
-                            #     moves.append(((src[0], src[1]), (calc_y, calc_x))) 
-                            moves.append(((src[0], src[1]), (calc_y, calc_x))) 
-        
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (-2,0)):
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
+                            
             else:               
                 directions = [(1, -1), (1, 0), (2, 0), (1, 1)]
                 for d in directions:
@@ -422,18 +424,15 @@ class Engine:
                         if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
                                 (calc_y, calc_x)) != color:
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                        print("HereB")
                         if (d == (1, 1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] +1)) == "p") :
-                            print("Here1B")
-                            print("src[0]",src[0])
-                            print("src[1]",src[1])
-                            print("self.previous_move[1][0]",self.previous_move[1][0])
-                            print("self.previous_move[1][1]",self.previous_move[1][1])
-                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (2,0)):
+                                
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
                                 
                         if (d == (1, -1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] -1)) == "p") :
-                            print("Here2B")
-                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (2,0)):
+                                
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
         return moves
 
     def _get_rook_moves(self, src, color):
@@ -896,9 +895,11 @@ class Engine:
 
 
 
-    # TODO: DONE: Castling some testing left.
-    # TODO: DONE: Pins only some testing left.
-    # TODO: DONE: If in check limit moves. Or if in double check only king can move.
-    # TODO: En-passant and en-passant checks.
+    #  DONE: Castling some testing left.
+    #  DONE: Pins only some testing left.
+    #  DONE: If in check limit moves. Or if in double check only king can move.
+    #  DONE: En-passant and en-passant checks.
     # TODO: Repetition stalemates and stuff.
-    # TODO: DONE: FEN Decoder
+    #  DONE: FEN Decoder
+    # TODO: Butify getpawnmoves instead of -/+ use d.
+    # TODO: Check en-passant extreme cases with checks etc.
