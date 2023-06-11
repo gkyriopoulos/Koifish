@@ -75,11 +75,7 @@ def draw_pinray(screen, square_width, square_height, squares):
 
 def main():
     # Choices are Normal, LosAlamos, MicroChess
-    board_choice = "Normal"
-    
-    
-
-    
+    board_choice = "MicroChess"
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
