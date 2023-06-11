@@ -78,7 +78,7 @@ class Engine:
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
         else:
-            self.board = self._boardTest
+            self.board = self._boardNormal
             self.dim_x = 8
             self.dim_y = 8
             self.king_pos_b = [0, 4]
@@ -101,6 +101,7 @@ class Engine:
         self.score = 0
         self.winner = "None"
         self.turn_player = "w"
+        self.previous_move = []
         self.pseudolegal_moves = []
         self.legal_moves = []
         self.threatmap = []
@@ -123,6 +124,7 @@ class Engine:
 
         if self.winner == "None":
             if (src, dst) in self.legal_moves:
+                self.previous_move = [src,dst]
                 self._make_move(src, dst, player)
                 return self.board
             else:
@@ -148,6 +150,8 @@ class Engine:
                     self.rook_small_w_moved = True
                 if src == self.rook_big_w:
                     self.rook_big_w_moved = True
+                    
+                
         else:
             if self.is_king(src):
                 self._set_king_pos(dst, player)
@@ -157,6 +161,9 @@ class Engine:
                     self.rook_small_b_moved = True
                 if src == self.rook_big_b:
                     self.rook_big_b_moved = True
+                    
+               
+        
 
         if src == (0, 4) and dst == (0, 7):
             self.board[src[0]][src[1]] = "**"
@@ -187,9 +194,41 @@ class Engine:
             self._set_king_pos((7, 2), "w")
             self.king_w_moved = True
         else:
-            self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
-            self.board[src[0]][src[1]] = "**"
-
+            
+            #Care might conflict with pawn move forwards
+            if self.is_pawn(src) and self.get_piece(dst) == "*":
+                if player == "w":
+                    self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+                    self.board[src[0]][src[1]] = "**"
+                    self.board[dst[0]+1][dst[1]] = "**"
+                else:
+                    self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+                    self.board[src[0]][src[1]] = "**"
+                    self.board[dst[0]-1][dst[1]] = "**"
+                
+            else:
+                self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
+                self.board[src[0]][src[1]] = "**"   
+            
+            
+                #Promotion stuff
+            if player == "w":            
+                    if self.is_pawn(dst) and dst[0] == 0 :
+                        if self.board_choice == "MicroChess":
+                            self.board[dst[0]][dst[1]] = "wr"
+                        else:
+                            self.board[dst[0]][dst[1]] = "wq"
+                           
+            else:
+                if self.is_pawn(dst) and dst[0] == self.dim_y -1 :
+                        if self.board_choice == "MicroChess":
+                            self.board[dst[0]][dst[1]] = "br"
+                        else:
+                            self.board[dst[0]][dst[1]] = "bq"
+                            
+                            
+            
+                
         # Swaps the player and calculates legal moves for the next player.
         self.turn_player = "b" if self.turn_player == "w" else "w"
         self.board_has_changed = True
@@ -300,7 +339,7 @@ class Engine:
             return self._get_queen_moves((src[0], src[1]), color)
 
     # Theoretically finds a piece's moves given its location.
-    # Think of as: If I place x piece on a square what would be the available moves in the current board?
+    # Think of it as: If I place x piece on a square what would be the available moves in the current board?
     def get_pieces_moves(self, src, piece, color):
         if piece == "p":
             return self._get_pawn_moves(src, color)
@@ -317,35 +356,83 @@ class Engine:
 
     # TODO: EN PASSANT CHANGES THE MOVES FOR THE PAWNS CARE!!!!!!!!!
     def _get_pawn_moves(self, src, color):
-        moves = []
-        if color == "w":
-            directions = [(-1, -1), (-1, 0), (-2, 0), (-1, 1)]
-            for d in directions:
-                calc_y = src[0] + d[0]
-                calc_x = src[1] + d[1]
-                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
-                    if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
-                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                    if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
-                            and self.get_piece((calc_y+1, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
-                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                    if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
-                            (calc_y, calc_x)) != color:
-                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
+        
+        if self.board_choice == "MicroChess":
+            
+            moves = []
+            if color == "w":
+                directions = [(-1, -1), (-1, 0), (-1, 1)]
+                for d in directions:
+                    calc_y = src[0] + d[0]
+                    calc_x = src[1] + d[1]
+                    if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                        if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
+                                (calc_y, calc_x)) != color:
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+            else:
+                directions = [(1, -1), (1, 0), (1, 1)]
+                for d in directions:
+                    calc_y = src[0] + d[0]
+                    calc_x = src[1] + d[1]
+                    if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                        if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
+                                (calc_y, calc_x)) != color:
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
         else:
-            directions = [(1, -1), (1, 0), (2, 0), (1, 1)]
-            for d in directions:
-                calc_y = src[0] + d[0]
-                calc_x = src[1] + d[1]
-                if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
-                    if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
-                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                    if d == (2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
-                            and self.get_piece((calc_y-1, calc_x)) == "*" and src[0] == 1:
-                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                    if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
-                            (calc_y, calc_x)) != color:
-                        moves.append(((src[0], src[1]), (calc_y, calc_x)))
+            moves = []
+            if color == "w":
+                directions = [(-1, -1), (-1, 0), (-2, 0), (-1, 1)]
+                for d in directions:
+                    calc_y = src[0] + d[0]
+                    calc_x = src[1] + d[1]
+                    if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                        if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                            
+                        if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
+                                and self.get_piece((calc_y+1, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if (d == (-1, -1) or d == (-1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
+                                (calc_y, calc_x)) != color:
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                          
+                                
+                        if (d == (-1, -1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] -1)) == "p" ): 
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (-2,0)):
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
+
+                        
+                        if (d == (-1, 1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] +1)) == "p" ):
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (-2,0)):
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
+                            
+            else:               
+                directions = [(1, -1), (1, 0), (2, 0), (1, 1)]
+                for d in directions:
+                    calc_y = src[0] + d[0]
+                    calc_x = src[1] + d[1]
+                    if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
+                        if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if d == (2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
+                                and self.get_piece((calc_y-1, calc_x)) == "*" and src[0] == 1:
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
+                                (calc_y, calc_x)) != color:
+                            moves.append(((src[0], src[1]), (calc_y, calc_x)))
+                        if (d == (1, 1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] +1)) == "p") :
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (2,0)):
+                                
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
+                                
+                        if (d == (1, -1) and len(self.previous_move) > 0 and self.get_piece((calc_y, calc_x)) == "*" and self.get_piece((src[0],src[1] -1)) == "p") :
+                            if ((self.previous_move[0][0] - self.previous_move[1][0], self.previous_move[0][1] - self.previous_move[1][1])== (2,0)):
+                                
+                                moves.append(((src[0], src[1]), (calc_y, calc_x))) 
         return moves
 
     def _get_rook_moves(self, src, color):
@@ -777,9 +864,42 @@ class Engine:
             return squares
         else:
             return []
+        
+        
+        
+    def decode_fen(self,fen):
+        fen_parts = fen.split(' ')
+        fen_board = fen_parts[0]
+        fen_rows = fen_board.split('/')
 
-    # TODO: DONE: Castling some testing left.
-    # TODO: DONE: Pins only some testing left.
-    # TODO: DONE: If in check limit moves. Or if in double check only king can move.
-    # TODO: En-passant and en-passant checks.
+        board_height = len(fen_rows)
+        board_width = max(len(row) for row in fen_rows)
+
+        board = [["**" for _ in range(board_width)] for _ in range(board_height)]
+
+        for row_index, fen_row in enumerate(fen_rows):
+            column_index = 0
+            for char in fen_row:
+                if char.isdigit():
+                    column_index += int(char)
+                else:
+                    if char.islower():
+                        piece = 'b' + char
+                    else:
+                        piece = 'w' + char.lower()
+                    board[row_index][column_index] = piece
+                    column_index += 1
+
+        return board
+    
+
+
+
+    #  DONE: Castling some testing left.
+    #  DONE: Pins only some testing left.
+    #  DONE: If in check limit moves. Or if in double check only king can move.
+    #  DONE: En-passant and en-passant checks.
     # TODO: Repetition stalemates and stuff.
+    #  DONE: FEN Decoder
+    # TODO: Butify getpawnmoves instead of -/+ use d.
+    # TODO: Check en-passant extreme cases with checks etc.

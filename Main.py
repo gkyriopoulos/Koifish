@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import pygame
 import pygame.display
 import pygame.draw_py
@@ -112,6 +113,14 @@ def main():
     my_engine = Engine.Engine(board_choice)
 
     board = my_engine.board
+    
+    ##Test fen decoder function
+    # fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+
+    # decoded_board = my_engine.decode_fen(fen)
+
+    # # Print the decoded board
+    # print(decoded_board)
 
     src = []
     dst = []
