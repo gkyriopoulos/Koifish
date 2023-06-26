@@ -2,7 +2,10 @@
 import pygame
 import pygame.display
 import pygame.draw_py
+
+import Agent
 import Engine
+import FEN_encoder
 
 pygame.init()
 
@@ -74,8 +77,11 @@ def draw_pinray(screen, square_width, square_height, squares):
 
 
 def main():
+
     # Choices are Normal, LosAlamos, MicroChess
-    board_choice = "Normal"
+    board_choice = "RKvsRK"
+    #Training the agent
+    Agent.train_agent(board_choice, 1000)
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
@@ -87,6 +93,24 @@ def main():
     elif board_choice == "LosAlamos":
         dim_x = 6
         dim_y = 6
+        # window_width = 2 * dim_x * img_x
+        window_width = dim_x * img_x
+        window_height = dim_y * img_y
+    elif board_choice == "RKvsRK":
+        dim_x = 4
+        dim_y = 5
+        # window_width = 2 * dim_x * img_x
+        window_width = dim_x * img_x
+        window_height = dim_y * img_y
+    elif board_choice == "RKvsRB":
+        dim_x = 4
+        dim_y = 5
+        # window_width = 2 * dim_x * img_x
+        window_width = dim_x * img_x
+        window_height = dim_y * img_y
+    elif board_choice == "RKvsRN":
+        dim_x = 4
+        dim_y = 5
         # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
@@ -111,9 +135,8 @@ def main():
     screen.fill(bg_colors)
 
     my_engine = Engine.Engine(board_choice)
-
     board = my_engine.board
-    
+
     ##Test fen decoder function
     # fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
@@ -131,13 +154,14 @@ def main():
     pinray_clicks = 0
     total_clicks = 0
     player = "w"
-
+    mode = "pve"
     # Button stuff
     # button_len = (220, 35)
     # button_center = (window_width / 2 + window_width / 4, window_height/10)
     # button_pos = (button_center[0] - button_len[0] / 2, button_center[1] - button_len[1] / 2)
 
     # Opening the window.
+
     running = True
     while running:
         for e in pygame.event.get():
@@ -193,18 +217,25 @@ def main():
                             pinray_clicks = 0
 
                         dst = [coords_y, coords_x]
-                        board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
+                        board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)[0]
 
-                        if board == "b":
+                        if my_engine.winner == "b":
                             break
-                        elif board == "w":
+                        elif my_engine.winner == "w":
                             break
-                        elif board == "d":
+                        elif my_engine.winner == "d":
                             break
 
-                        if my_engine.board_has_changed:
-                            # After making a move swap player.
-                            player = "b" if player == "w" else "w"
+                        if mode == "pvp":
+                            if my_engine.board_has_changed:
+                                # After making a move swap player.
+                                player = "b" if player == "w" else "w"
+                        else:
+                            encoded_board = FEN_encoder.encode_microchess_fen(my_engine.board)
+                            my_agent = Agent.QLearningAgent()
+                            my_agent.actions = my_engine.legal_moves
+                            action = my_agent.choose_action(encoded_board)
+                            board = my_engine.attempt_move(action[0], action[1], "b")[0]
 
                         dst.clear()
                         src.clear()
@@ -245,13 +276,13 @@ def main():
         # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
 
         # If the game is not over draw the board.
-        if board == "b":
+        if my_engine.winner == "b":
             print("Black Wins!")
             running = False
-        elif board == "w":
+        elif my_engine.winner == "w":
             print("White Wins!")
             running = False
-        elif board == "d":
+        elif my_engine.winner == "d":
             print("Draw!")
             running = False
         else:

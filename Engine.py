@@ -1,49 +1,70 @@
 import itertools
 
-
 class Engine:
-    _boardNormal = [
-        ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
-        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-        ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]]
-
-    _boardLosAlamos = [
-        ["br", "bn", "bq", "bk", "bn", "br"],
-        ["bp", "bp", "bp", "bp", "bp", "bp"],
-        ["**", "**", "**", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**"],
-        ["wp", "wp", "wp", "wp", "wp", "wp"],
-        ["wr", "wn", "wq", "wk", "wn", "wr"]]
-
-    _boardMicroChess = [
-        ["bk", "bn", "bb", "br"],
-        ["bp", "**", "**", "**"],
-        ["**", "**", "**", "**"],
-        ["**", "**", "**", "wp"],
-        ["wr", "wb", "wn", "wk"]]
-
-    _boardTest = [
-        ["br", "**", "**", "**", "bk", "**", "**", "br"],
-        ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
-        ["br", "br", "bb", "bq", "bk", "bb", "bn", "br"],
-        ["**", "**", "**", "**", "wp", "**", "**", "**"],
-        ["**", "**", "**", "**", "**", "**", "**", "**"],
-        ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"],
-        ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
-        ["wr", "**", "**", "**", "wk", "**", "**", "wr"]]
-
-    _microChessMoves = {
-        "a1": (0, 4), "a2": (0, 3), "a3": (0, 2), "a4": (0, 1), "a5": (0, 0),
-        "b1": (1, 4), "b2": (1, 3), "b3": (1, 2), "b4": (1, 1), "b5": (1, 0),
-        "c1": (2, 4), "c2": (2, 3), "c3": (2, 2), "c4": (2, 1), "c5": (2, 0),
-        "d1": (3, 4), "d2": (3, 3), "d3": (3, 2), "d4": (3, 1), "d5": (3, 0)}
 
     def __init__(self, board_choice):
+
+        self._boardNormal = [
+            ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"],
+            ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+            ["**", "**", "**", "**", "**", "**", "**", "**"],
+            ["**", "**", "**", "**", "**", "**", "**", "**"],
+            ["**", "**", "**", "**", "**", "**", "**", "**"],
+            ["**", "**", "**", "**", "**", "**", "**", "**"],
+            ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+            ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"]]
+
+        self._boardLosAlamos = [
+            ["br", "bn", "bq", "bk", "bn", "br"],
+            ["bp", "bp", "bp", "bp", "bp", "bp"],
+            ["**", "**", "**", "**", "**", "**"],
+            ["**", "**", "**", "**", "**", "**"],
+            ["wp", "wp", "wp", "wp", "wp", "wp"],
+            ["wr", "wn", "wq", "wk", "wn", "wr"]]
+
+        self._boardMicroChess = [
+            ["bk", "bn", "bb", "br"],
+            ["bp", "**", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "**", "wp"],
+            ["wr", "wb", "wn", "wk"]]
+
+        self._boardTest = [
+            ["br", "**", "**", "**", "bk", "**", "**", "br"],
+            ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"],
+            ["br", "br", "bb", "bq", "bk", "bb", "bn", "br"],
+            ["**", "**", "**", "**", "wp", "**", "**", "**"],
+            ["**", "**", "**", "**", "**", "**", "**", "**"],
+            ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"],
+            ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
+            ["wr", "**", "**", "**", "wk", "**", "**", "wr"]]
+
+        self._microChessMoves = {
+            "a1": (0, 4), "a2": (0, 3), "a3": (0, 2), "a4": (0, 1), "a5": (0, 0),
+            "b1": (1, 4), "b2": (1, 3), "b3": (1, 2), "b4": (1, 1), "b5": (1, 0),
+            "c1": (2, 4), "c2": (2, 3), "c3": (2, 2), "c4": (2, 1), "c5": (2, 0),
+            "d1": (3, 4), "d2": (3, 3), "d3": (3, 2), "d4": (3, 1), "d5": (3, 0)}
+
+        self._boardRKvsRK = [
+            ["**", "bk", "**", "**"],
+            ["**", "br", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "wr", "**"],
+            ["**", "**", "wk", "**"]]
+
+        self._boardRKvsBK = [
+            ["**", "bk", "**", "**"],
+            ["**", "br", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "wb", "**"],
+            ["**", "**", "wk", "**"]]
+
+        self._boardRKvsNK = [
+            ["**", "bk", "**", "**"],
+            ["**", "br", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "**", "wn"],
+            ["**", "**", "wk", "**"]]
 
         if board_choice == "MicroChess":
             self.board = self._boardMicroChess
@@ -93,6 +114,54 @@ class Engine:
             self.rook_big_w_moved = False
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
+        elif board_choice == "RKvsRK":
+            self.board = self._boardRKvsRK
+            self.dim_x = 4
+            self.dim_y = 5
+            self.king_pos_b = [0, 1]
+            self.king_pos_w = [4, 2]
+            self.rook_small_w = None
+            self.rook_big_w = (3, 2)
+            self.rook_small_b = None
+            self.rook_big_b = (1, 1)
+            self.king_b_moved = False
+            self.king_w_moved = False
+            self.rook_small_w_moved = False
+            self.rook_big_w_moved = False
+            self.rook_small_b_moved = False
+            self.rook_big_b_moved = False
+        elif board_choice == "RKvsRB":
+            self.board = self._boardRKvsRK
+            self.dim_x = 4
+            self.dim_y = 5
+            self.king_pos_b = [0, 1]
+            self.king_pos_w = [4, 2]
+            self.rook_small_w = None
+            self.rook_big_w = False
+            self.rook_small_b = None
+            self.rook_big_b = (1, 1)
+            self.king_b_moved = False
+            self.king_w_moved = False
+            self.rook_small_w_moved = False
+            self.rook_big_w_moved = False
+            self.rook_small_b_moved = False
+            self.rook_big_b_moved = False
+        elif board_choice == "RKvsRN":
+            self.board = self._boardRKvsRK
+            self.dim_x = 4
+            self.dim_y = 5
+            self.king_pos_b = [0, 1]
+            self.king_pos_w = [4, 2]
+            self.rook_small_w = None
+            self.rook_big_w = False
+            self.rook_small_b = None
+            self.rook_big_b = (1, 1)
+            self.king_b_moved = False
+            self.king_w_moved = False
+            self.rook_small_w_moved = False
+            self.rook_big_w_moved = False
+            self.rook_small_b_moved = False
+            self.rook_big_b_moved = False
 
         # TODO: We have to create a function that checks the board and calculates the score in case you
         #  start with handicap, just and idea for now.
@@ -126,12 +195,19 @@ class Engine:
             if (src, dst) in self.legal_moves:
                 self.previous_move = [src, dst]
                 self._make_move(src, dst, player)
-                return self.board
+
+                if self.winner == "d":
+                    return self.board, 0
+                elif self.winner == player:
+                    return self.board, 100
+                elif self.winner != player and self.winner != "None":
+                    return self.board, -100
+
+                return self.board, 0
             else:
                 self.board_has_changed = False
-                return self.board
-        else:
-            return self.winner
+                return self.board, 0
+
 
     def _make_move(self, src, dst, player):
 
@@ -285,11 +361,11 @@ class Engine:
         # Remove empty moves
         self.legal_moves = [x for x in self.legal_moves if x]
 
-        print(self.legal_moves)
-
         if not self.legal_moves:
             self.winner = "d"
 
+        if self._check_stalemate():
+            self.winner = "d"
     def _generate_pseudolegal_moves(self, color):
         for i in range(self.dim_x):
             for j in range(self.dim_y):
@@ -362,9 +438,8 @@ class Engine:
                     if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                         if d == (-1, 0) and self.get_piece((calc_y, calc_x)) == "*":
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                        if (d == (-1, -1) or d == (-1, 1)) and self.get_piece(
-                                (calc_y, calc_x)) != "*" and self.get_color(
-                            (calc_y, calc_x)) != color:
+                        if (d == (-1, -1) or d == (-1, 1)) and \
+                                self.get_piece((calc_y, calc_x)) != "*" and self.get_color((calc_y, calc_x)) != color:
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
             else:
                 directions = [(1, -1), (1, 0), (1, 1)]
@@ -374,8 +449,8 @@ class Engine:
                     if 0 <= calc_y < self.dim_y and 0 <= calc_x < self.dim_x:
                         if d == (1, 0) and self.get_piece((calc_y, calc_x)) == "*":
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                        if (d == (1, -1) or d == (1, 1)) and self.get_piece((calc_y, calc_x)) != "*" and self.get_color(
-                                (calc_y, calc_x)) != color:
+                        if (d == (1, -1) or d == (1, 1)) and \
+                                self.get_piece((calc_y, calc_x)) != "*" and self.get_color((calc_y, calc_x)) != color:
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
         else:
             moves = []
@@ -391,9 +466,8 @@ class Engine:
                         if d == (-2, 0) and self.get_piece((calc_y, calc_x)) == "*" \
                                 and self.get_piece((calc_y + 1, calc_x)) == "*" and src[0] == (self.dim_y - 1) - 1:
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
-                        if (d == (-1, -1) or d == (-1, 1)) and self.get_piece(
-                                (calc_y, calc_x)) != "*" and self.get_color(
-                            (calc_y, calc_x)) != color:
+                        if (d == (-1, -1) or d == (-1, 1)) and \
+                                self.get_piece((calc_y, calc_x)) != "*" and self.get_color((calc_y, calc_x)) != color:
                             moves.append(((src[0], src[1]), (calc_y, calc_x)))
 
                         if (d == (-1, -1) and len(self.previous_move) > 0 and self.get_piece(
@@ -867,30 +941,12 @@ class Engine:
         else:
             return []
 
-    def decode_fen(self, fen):
-        fen_parts = fen.split(' ')
-        fen_board = fen_parts[0]
-        fen_rows = fen_board.split('/')
-
-        board_height = len(fen_rows)
-        board_width = max(len(row) for row in fen_rows)
-
-        board = [["**" for _ in range(board_width)] for _ in range(board_height)]
-
-        for row_index, fen_row in enumerate(fen_rows):
-            column_index = 0
-            for char in fen_row:
-                if char.isdigit():
-                    column_index += int(char)
-                else:
-                    if char.islower():
-                        piece = 'b' + char
-                    else:
-                        piece = 'w' + char.lower()
-                    board[row_index][column_index] = piece
-                    column_index += 1
-
-        return board
+    def _check_stalemate(self):
+        for i in range(self.dim_x):
+            for j in range(self.dim_y):
+                if self.get_piece((j, i)) != "k" and self.get_piece((j, i)) != "*":
+                    return False
+        return True
 
     #  DONE: Castling some testing left.
     #  DONE: Pins only some testing left.
