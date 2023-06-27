@@ -79,16 +79,16 @@ def main():
     # Choices are Normal, LosAlamos, MicroChess
     player = "w"
     board_choice = "MicroChess"
-    mode = "pve"
-    episodes = 1
-    games = 1
+    mode = "pvp"
+    episodes = 500000
+
     # Training
-    #regret_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
-    #regret_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
-    #Agent.train_agent_vs_agent(board_choice, episodes)
+    # regret_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
+    # regret_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
+    # Agent.train_agent_vs_agent(board_choice, episodes)
     #
-    #plt.semilogy(regret_white / episodes, label="White reward, T = " + str(episodes))
-    #plt.semilogy(regret_black / episodes, label="Black reward, T = " + str(episodes))
+    # plt.semilogy(regret_white / episodes, label="White reward, T = " + str(episodes))
+    # plt.semilogy(regret_black / episodes, label="Black reward, T = " + str(episodes))
     # plt.legend()
     # plt.xlabel("Time")
     # plt.ylabel("Average Reward")
@@ -98,43 +98,36 @@ def main():
         # Creating an agent to play against.
         my_agent = Agent.QLearningAgent(board_choice, "b")
 
-
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
         dim_x = 4
         dim_y = 5
-        # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
     elif board_choice == "LosAlamos":
         dim_x = 6
         dim_y = 6
-        # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
     elif board_choice == "RKvsRK":
         dim_x = 4
         dim_y = 5
-        # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
     elif board_choice == "RKvsRB":
         dim_x = 4
         dim_y = 5
-        # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
     elif board_choice == "RKvsRN":
         dim_x = 4
         dim_y = 5
-        # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
     else:
         board_choice = "Normal"
         dim_x = 8
         dim_y = 8
-        # window_width = 2 * dim_x * img_x
         window_width = dim_x * img_x
         window_height = dim_y * img_y
 
@@ -143,20 +136,11 @@ def main():
     square_height = window_height // dim_y
 
     # Loading piece's images from the disk.
-    # load_assets(square_width / 2, square_height)
     load_assets(square_width, square_height)
 
     # Initialising the screen.
     screen = pygame.display.set_mode((window_width, window_height))
     screen.fill(bg_colors)
-
-    # Test fen decoder function
-    # fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
-
-    # decoded_board = my_engine.decode_fen(fen)
-
-    # # Print the decoded board
-    # print(decoded_board)
 
     src = []
     dst = []
@@ -167,14 +151,9 @@ def main():
     pinray_clicks = 0
     total_clicks = 0
 
-    # Button stuff
-    # button_len = (220, 35)
-    # button_center = (window_width / 2 + window_width / 4, window_height/10)
-    # button_pos = (button_center[0] - button_len[0] / 2, button_center[1] - button_len[1] / 2)
-
     # Opening the window.
-
-    for game in range(games):
+    play_again = True
+    while play_again:
         running = True
         my_engine = Engine.Engine(board_choice)
         board = my_engine.board
@@ -185,7 +164,6 @@ def main():
                 elif e.type == pygame.MOUSEBUTTONDOWN:
                     coords = pygame.mouse.get_pos()
                     # Check that the click is inside the chess board.
-                    # coords_x = 2 * coords[0] // square_width
                     coords_x = coords[0] // square_width
                     coords_y = coords[1] // square_height
                     if 0 <= coords_x < dim_x and 0 <= coords_y < dim_y:
@@ -233,7 +211,6 @@ def main():
 
                             dst = [coords_y, coords_x]
                             board, reward = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
-                            #print("Reward after making a move: ", reward)
 
                             if my_engine.winner == "b":
                                 break
@@ -256,16 +233,6 @@ def main():
                             src.clear()
                             total_clicks = 0
 
-                    # Button stuff
-                    # if button_pos[0] <= coords[0] <= button_pos[0] + button_len[0] and button_pos[1] <= coords[1] <= \
-                    #         button_pos[1] + button_len[1]:
-                    #     if threat_map_clicks == 0:
-                    #         threat_map = my_engine.threatmap
-                    #         threat_map_clicks += 1
-                    #     else:
-                    #         threat_map = []
-                    #         threat_map_clicks = 0
-
                 elif e.type == pygame.KEYDOWN:
                     if e.key == pygame.K_t:
                         if threatmap_clicks == 0:
@@ -282,14 +249,6 @@ def main():
                             pinray = []
                             pinray_clicks = 0
 
-            # Button stuff
-            # x, y = pygame.mouse.get_pos()
-            # if button_pos[0] <= x <= button_pos[0] + button_len[0] and button_pos[1] <= y <= button_pos[1] + button_len[1]:
-            #     draw_threatmap_button(screen, button_colors[0], button_len, button_center, button_pos)
-            # else:
-            #     draw_threatmap_button(screen, button_colors[1], button_len, button_center, button_pos)
-            # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
-
             # If the game is not over draw the board.
             if my_engine.winner == "b":
                 print("Black Wins!")
@@ -300,8 +259,8 @@ def main():
             elif my_engine.winner == "d":
                 print("Draw!")
                 running = False
-            else:
-                draw_board(screen, board, dim_x, dim_y, square_width, square_height)
+
+            draw_board(screen, board, dim_x, dim_y, square_width, square_height)
 
             if highlighted_moves:
                 draw_highlights(screen, square_width, square_height, highlighted_moves)
@@ -312,14 +271,15 @@ def main():
             if pinray:
                 draw_pinray(screen, square_width, square_height, pinray)
 
-            # if highlighted_moves:
-            # draw_highlights(screen, square_width / 2, square_height, highlighted_moves)
-            # if threat_map:
-            #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
-            # if pinray:
-            #     draw_threatmap(screen, square_width / 2, square_height, pinray)
-
             pygame.display.update()
+
+        user_input = input("Do you want to play again? (y/n)")
+        if user_input == "y":
+            play_again = True
+            player = "w"
+        else:
+            play_again = False
+            player = "w"
 
 
 if __name__ == "__main__":

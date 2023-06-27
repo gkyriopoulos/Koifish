@@ -166,8 +166,6 @@ class Engine:
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
 
-        # TODO: We have to create a function that checks the board and calculates the score in case you
-        #  start with handicap, just and idea for now.
         self.pieces = ["r", "n", "b", "q", "k", "p"]
         self.board_choice = board_choice
         self.repetition_counter = 0
@@ -361,12 +359,11 @@ class Engine:
         if not self.legal_moves:
             self.winner = "d"
 
-        if self._check_stalemate():
+        if self._check_ins_material():
             self.winner = "d"
 
         if self._check_threefold_repetition(self.previous_positions):
             self.winner = "d"
-
 
     def _generate_pseudolegal_moves(self, color):
         for i in range(self.dim_x):
@@ -950,6 +947,25 @@ class Engine:
                     return False
         return True
 
+    def _check_ins_material(self):
+        counter = 0
+        major_piece_counter = 0
+        for i in range(self.dim_x):
+            for j in range(self.dim_y):
+                if self.get_piece((j, i)) != "*":
+                    counter += 1
+                    if self.get_piece((j, i)) == "n":
+                        major_piece_counter += 1
+                    if self.get_piece((j, i)) == "b":
+                        major_piece_counter += 1
+        if counter > 3:
+            return False
+        else:
+            if counter - major_piece_counter == 2:
+                return True
+            else:
+                return False
+
     def _calculate_score(self):
         total_score = 0
         for i in range(self.dim_x):
@@ -989,11 +1005,12 @@ class Engine:
             return True
 
         return False
+
     #  DONE: Castling some testing left.
     #  DONE: Pins only some testing left.
     #  DONE: If in check limit moves. Or if in double check only king can move.
     #  DONE: En-passant and en-passant checks.
-    # TODO: Repetition stalemates and stuff.
+    #  DONE: Repetition stalemates and stuff.
     #  DONE: FEN Decoder
     # TODO: Butify getpawnmoves instead of -/+ use d.
     # TODO: Check en-passant extreme cases with checks etc.
