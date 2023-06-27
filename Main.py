@@ -2,10 +2,11 @@
 import pygame
 import pygame.display
 import pygame.draw_py
+import matplotlib.pyplot as plt
 
 import Agent
 import Engine
-import FEN_encoder
+import Utils
 
 pygame.init()
 
@@ -43,10 +44,8 @@ def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
 
 def draw_highlights(screen, square_width, square_height, squares):
     for square in squares:
-        pygame.draw.circle(screen, highlight_colors
-                           , (square_width * square[1][1] + square_width / 2
-                              , square_height * square[1][0] + square_height / 2)
-                           , 10)
+        pygame.draw.circle(screen, highlight_colors, (square_width * square[1][1] + square_width / 2,
+                                                      square_height * square[1][0] + square_height / 2), 10)
 
 
 def draw_threatmap(screen, square_width, square_height, squares):
@@ -77,11 +76,28 @@ def draw_pinray(screen, square_width, square_height, squares):
 
 
 def main():
-
     # Choices are Normal, LosAlamos, MicroChess
-    board_choice = "RKvsRK"
-    #Training the agent
-    Agent.train_agent(board_choice, 1000)
+    player = "w"
+    board_choice = "MicroChess"
+    mode = "pve"
+    episodes = 1
+    games = 1
+    # Training
+    #regret_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
+    #regret_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
+    #Agent.train_agent_vs_agent(board_choice, episodes)
+    #
+    #plt.semilogy(regret_white / episodes, label="White reward, T = " + str(episodes))
+    #plt.semilogy(regret_black / episodes, label="Black reward, T = " + str(episodes))
+    # plt.legend()
+    # plt.xlabel("Time")
+    # plt.ylabel("Average Reward")
+    # plt.show()
+
+    if mode == "pve":
+        # Creating an agent to play against.
+        my_agent = Agent.QLearningAgent(board_choice, "b")
+
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
@@ -134,10 +150,7 @@ def main():
     screen = pygame.display.set_mode((window_width, window_height))
     screen.fill(bg_colors)
 
-    my_engine = Engine.Engine(board_choice)
-    board = my_engine.board
-
-    ##Test fen decoder function
+    # Test fen decoder function
     # fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
 
     # decoded_board = my_engine.decode_fen(fen)
@@ -153,8 +166,7 @@ def main():
     pinray = []
     pinray_clicks = 0
     total_clicks = 0
-    player = "w"
-    mode = "pve"
+
     # Button stuff
     # button_len = (220, 35)
     # button_center = (window_width / 2 + window_width / 4, window_height/10)
@@ -162,149 +174,152 @@ def main():
 
     # Opening the window.
 
-    running = True
-    while running:
-        for e in pygame.event.get():
-            if e.type == pygame.QUIT:
-                running = False
-            elif e.type == pygame.MOUSEBUTTONDOWN:
-                coords = pygame.mouse.get_pos()
-                # Check that the click is inside the chess board.
-                # coords_x = 2 * coords[0] // square_width
-                coords_x = coords[0] // square_width
-                coords_y = coords[1] // square_height
-                if 0 <= coords_x < dim_x and 0 <= coords_y < dim_y:
-                    highlighted_moves = []
-                    # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
-                    # => reset dst, src
-                    if src == [coords_y, coords_x] or (
-                            my_engine.board[coords_y][coords_x] == "**" and total_clicks == 0):
-                        dst.clear()
-                        src.clear()
-                        total_clicks = 0
-                    elif total_clicks == 0:
-                        src = [coords_y, coords_x]
-                        total_clicks += 1
-                        legal_moves = my_engine.legal_moves
-                        selected_moves = my_engine.get_pieces_moves(src, my_engine.get_piece(src), player)
-                        highlighted_moves = set(legal_moves).intersection(selected_moves)
-                        # Castling highlights gui stuff
-                        if ((7, 4), (7, 7)) in legal_moves and src == [7, 4]:
-                            highlighted_moves.add(((7, 4), (7, 5)))
-                            highlighted_moves.add(((7, 4), (7, 6)))
-                            highlighted_moves.add(((7, 4), (7, 7)))
-                        if ((0, 4), (0, 7)) in legal_moves and src == [0, 4]:
-                            highlighted_moves.add(((0, 4), (0, 5)))
-                            highlighted_moves.add(((0, 4), (0, 6)))
-                            highlighted_moves.add(((0, 4), (0, 7)))
-                        if ((7, 4), (7, 0)) in legal_moves and src == [7, 4]:
-                            highlighted_moves.add(((7, 4), (7, 3)))
-                            highlighted_moves.add(((7, 4), (7, 2)))
-                            highlighted_moves.add(((7, 4), (7, 1)))
-                            highlighted_moves.add(((7, 4), (7, 0)))
-                        if ((0, 4), (0, 0)) in legal_moves and src == [0, 4]:
-                            highlighted_moves.add(((0, 4), (0, 3)))
-                            highlighted_moves.add(((0, 4), (0, 2)))
-                            highlighted_moves.add(((0, 4), (0, 1)))
-                            highlighted_moves.add(((0, 4), (0, 0)))
-                    elif total_clicks == 1:
-                        # Added because of a threatmap bug
-                        if threatmap_clicks == 1:
+    for game in range(games):
+        running = True
+        my_engine = Engine.Engine(board_choice)
+        board = my_engine.board
+        while running:
+            for e in pygame.event.get():
+                if e.type == pygame.QUIT:
+                    running = False
+                elif e.type == pygame.MOUSEBUTTONDOWN:
+                    coords = pygame.mouse.get_pos()
+                    # Check that the click is inside the chess board.
+                    # coords_x = 2 * coords[0] // square_width
+                    coords_x = coords[0] // square_width
+                    coords_y = coords[1] // square_height
+                    if 0 <= coords_x < dim_x and 0 <= coords_y < dim_y:
+                        highlighted_moves = []
+                        # if (we choose the same coord reset or (if it's not dst click, and we choose empty tile) )
+                        # => reset dst, src
+                        if src == [coords_y, coords_x] or (
+                                my_engine.board[coords_y][coords_x] == "**" and total_clicks == 0):
+                            dst.clear()
+                            src.clear()
+                            total_clicks = 0
+                        elif total_clicks == 0:
+                            src = [coords_y, coords_x]
+                            total_clicks += 1
+                            legal_moves = my_engine.legal_moves
+                            selected_moves = my_engine.get_pieces_moves(src, my_engine.get_piece(src), player)
+                            highlighted_moves = set(legal_moves).intersection(selected_moves)
+                            # Castling highlights gui stuff
+                            if ((7, 4), (7, 7)) in legal_moves and src == [7, 4]:
+                                highlighted_moves.add(((7, 4), (7, 5)))
+                                highlighted_moves.add(((7, 4), (7, 6)))
+                                highlighted_moves.add(((7, 4), (7, 7)))
+                            if ((0, 4), (0, 7)) in legal_moves and src == [0, 4]:
+                                highlighted_moves.add(((0, 4), (0, 5)))
+                                highlighted_moves.add(((0, 4), (0, 6)))
+                                highlighted_moves.add(((0, 4), (0, 7)))
+                            if ((7, 4), (7, 0)) in legal_moves and src == [7, 4]:
+                                highlighted_moves.add(((7, 4), (7, 3)))
+                                highlighted_moves.add(((7, 4), (7, 2)))
+                                highlighted_moves.add(((7, 4), (7, 1)))
+                                highlighted_moves.add(((7, 4), (7, 0)))
+                            if ((0, 4), (0, 0)) in legal_moves and src == [0, 4]:
+                                highlighted_moves.add(((0, 4), (0, 3)))
+                                highlighted_moves.add(((0, 4), (0, 2)))
+                                highlighted_moves.add(((0, 4), (0, 1)))
+                                highlighted_moves.add(((0, 4), (0, 0)))
+                        elif total_clicks == 1:
+                            # Added because of a threatmap bug
+                            if threatmap_clicks == 1:
+                                threatmap = []
+                                threatmap_clicks = 0
+                            if pinray_clicks == 1:
+                                pinray = []
+                                pinray_clicks = 0
+
+                            dst = [coords_y, coords_x]
+                            board, reward = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
+                            #print("Reward after making a move: ", reward)
+
+                            if my_engine.winner == "b":
+                                break
+                            elif my_engine.winner == "w":
+                                break
+                            elif my_engine.winner == "d":
+                                break
+
+                            if mode == "pvp":
+                                if my_engine.board_has_changed:
+                                    # After making a move swap player.
+                                    player = "b" if player == "w" else "w"
+                            else:
+                                encoded_board = Utils.encode_microchess_fen(my_engine.board)
+                                my_agent.actions = my_engine.legal_moves
+                                action = my_agent.choose_action(encoded_board)
+                                board = my_engine.attempt_move(action[0], action[1], "b")[0]
+
+                            dst.clear()
+                            src.clear()
+                            total_clicks = 0
+
+                    # Button stuff
+                    # if button_pos[0] <= coords[0] <= button_pos[0] + button_len[0] and button_pos[1] <= coords[1] <= \
+                    #         button_pos[1] + button_len[1]:
+                    #     if threat_map_clicks == 0:
+                    #         threat_map = my_engine.threatmap
+                    #         threat_map_clicks += 1
+                    #     else:
+                    #         threat_map = []
+                    #         threat_map_clicks = 0
+
+                elif e.type == pygame.KEYDOWN:
+                    if e.key == pygame.K_t:
+                        if threatmap_clicks == 0:
+                            threatmap = my_engine.threatmap
+                            threatmap_clicks += 1
+                        else:
                             threatmap = []
                             threatmap_clicks = 0
-                        if pinray_clicks == 1:
+                    if e.key == pygame.K_p:
+                        if pinray_clicks == 0:
+                            pinray = my_engine.pinrays
+                            pinray_clicks += 1
+                        else:
                             pinray = []
                             pinray_clicks = 0
 
-                        dst = [coords_y, coords_x]
-                        board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)[0]
+            # Button stuff
+            # x, y = pygame.mouse.get_pos()
+            # if button_pos[0] <= x <= button_pos[0] + button_len[0] and button_pos[1] <= y <= button_pos[1] + button_len[1]:
+            #     draw_threatmap_button(screen, button_colors[0], button_len, button_center, button_pos)
+            # else:
+            #     draw_threatmap_button(screen, button_colors[1], button_len, button_center, button_pos)
+            # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
 
-                        if my_engine.winner == "b":
-                            break
-                        elif my_engine.winner == "w":
-                            break
-                        elif my_engine.winner == "d":
-                            break
+            # If the game is not over draw the board.
+            if my_engine.winner == "b":
+                print("Black Wins!")
+                running = False
+            elif my_engine.winner == "w":
+                print("White Wins!")
+                running = False
+            elif my_engine.winner == "d":
+                print("Draw!")
+                running = False
+            else:
+                draw_board(screen, board, dim_x, dim_y, square_width, square_height)
 
-                        if mode == "pvp":
-                            if my_engine.board_has_changed:
-                                # After making a move swap player.
-                                player = "b" if player == "w" else "w"
-                        else:
-                            encoded_board = FEN_encoder.encode_microchess_fen(my_engine.board)
-                            my_agent = Agent.QLearningAgent()
-                            my_agent.actions = my_engine.legal_moves
-                            action = my_agent.choose_action(encoded_board)
-                            board = my_engine.attempt_move(action[0], action[1], "b")[0]
+            if highlighted_moves:
+                draw_highlights(screen, square_width, square_height, highlighted_moves)
 
-                        dst.clear()
-                        src.clear()
-                        total_clicks = 0
+            if threatmap:
+                draw_threatmap(screen, square_width, square_height, threatmap)
 
-                # Button stuff
-                # if button_pos[0] <= coords[0] <= button_pos[0] + button_len[0] and button_pos[1] <= coords[1] <= \
-                #         button_pos[1] + button_len[1]:
-                #     if threat_map_clicks == 0:
-                #         threat_map = my_engine.threatmap
-                #         threat_map_clicks += 1
-                #     else:
-                #         threat_map = []
-                #         threat_map_clicks = 0
+            if pinray:
+                draw_pinray(screen, square_width, square_height, pinray)
 
-            elif e.type == pygame.KEYDOWN:
-                if e.key == pygame.K_t:
-                    if threatmap_clicks == 0:
-                        threatmap = my_engine.threatmap
-                        threatmap_clicks += 1
-                    else:
-                        threatmap = []
-                        threatmap_clicks = 0
-                if e.key == pygame.K_p:
-                    if pinray_clicks == 0:
-                        pinray = my_engine.pinrays
-                        pinray_clicks += 1
-                    else:
-                        pinray = []
-                        pinray_clicks = 0
+            # if highlighted_moves:
+            # draw_highlights(screen, square_width / 2, square_height, highlighted_moves)
+            # if threat_map:
+            #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
+            # if pinray:
+            #     draw_threatmap(screen, square_width / 2, square_height, pinray)
 
-        # Button stuff
-        # x, y = pygame.mouse.get_pos()
-        # if button_pos[0] <= x <= button_pos[0] + button_len[0] and button_pos[1] <= y <= button_pos[1] + button_len[1]:
-        #     draw_threatmap_button(screen, button_colors[0], button_len, button_center, button_pos)
-        # else:
-        #     draw_threatmap_button(screen, button_colors[1], button_len, button_center, button_pos)
-        # draw_board(screen, board, dim_x, dim_y, square_width / 2, square_height)
-
-        # If the game is not over draw the board.
-        if my_engine.winner == "b":
-            print("Black Wins!")
-            running = False
-        elif my_engine.winner == "w":
-            print("White Wins!")
-            running = False
-        elif my_engine.winner == "d":
-            print("Draw!")
-            running = False
-        else:
-            draw_board(screen, board, dim_x, dim_y, square_width, square_height)
-
-        if highlighted_moves:
-            draw_highlights(screen, square_width, square_height, highlighted_moves)
-
-        if threatmap:
-            draw_threatmap(screen, square_width, square_height, threatmap)
-
-        if pinray:
-            draw_pinray(screen, square_width, square_height, pinray)
-
-        # if highlighted_moves:
-        # draw_highlights(screen, square_width / 2, square_height, highlighted_moves)
-        # if threat_map:
-        #     draw_threatmap(screen, square_width / 2, square_height, threat_map)
-        # if pinray:
-        #     draw_threatmap(screen, square_width / 2, square_height, pinray)
-
-        pygame.display.update()
+            pygame.display.update()
 
 
 if __name__ == "__main__":

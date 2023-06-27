@@ -1,3 +1,7 @@
+import ujson
+import os
+
+
 def decode_fen(fen):
     fen_parts = fen.split(' ')
     fen_board = fen_parts[0]
@@ -70,3 +74,50 @@ def encode_microchess_fen(board):
     fen = fen.rstrip("/")  # Remove the trailing '/'
 
     return fen
+
+
+# def save_q(agent):
+#     converted_data = {}
+#     converted_data = {str(key): value for key, value in agent.q_values.items()}
+#
+#     with open(agent.file_name, "w") as file:
+#         ujson.dump(converted_data, file)
+
+def save_q(agent):
+    converted_data = {}
+    converted_data = {str(key): value for key, value in agent.q_values.items()}
+
+    # Use dumps to convert the data into a JSON string
+    json_string = ujson.dumps(converted_data)
+
+    with open(agent.file_name, "w") as file:
+        # Write the JSON string to the file
+        file.write(json_string)
+
+
+# def load_q(agent):
+#     loaded_data = {}
+#     if os.path.exists(agent.file_name):
+#         # Open the JSON file in read mode
+#         with open(agent.file_name, 'r') as f:
+#             loaded_str_data = ujson.load(f)
+#         # Convert string keys back to tuples
+#         loaded_data = {eval(key): value for key, value in loaded_str_data.items()}
+#         return loaded_data
+#     else:
+#         return loaded_data
+
+def load_q(agent):
+    loaded_data = {}
+    if os.path.exists(agent.file_name):
+        # Open the file in read mode
+        with open(agent.file_name, 'r') as f:
+            # Read the entire file into a string
+            file_content = f.read()
+        # Use loads to convert the string into a Python object
+        loaded_str_data = ujson.loads(file_content)
+        # Convert string keys back to tuples
+        loaded_data = {eval(key): value for key, value in loaded_str_data.items()}
+        return loaded_data
+    else:
+        return loaded_data

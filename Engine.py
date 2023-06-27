@@ -1,5 +1,8 @@
 import itertools
 
+import Utils
+
+
 class Engine:
 
     def __init__(self, board_choice):
@@ -167,6 +170,7 @@ class Engine:
         #  start with handicap, just and idea for now.
         self.pieces = ["r", "n", "b", "q", "k", "p"]
         self.board_choice = board_choice
+        self.repetition_counter = 0
         self.score = 0
         self.winner = "None"
         self.turn_player = "w"
@@ -176,6 +180,7 @@ class Engine:
         self.threatmap = []
         self.pinrays = []
         self.checkers = []
+        self.previous_positions = []
         self.generate_legal_moves(self.turn_player)
         # I use this to player swap in player vs player mode it's probably not need.
         self.board_has_changed = False
@@ -195,19 +200,10 @@ class Engine:
             if (src, dst) in self.legal_moves:
                 self.previous_move = [src, dst]
                 self._make_move(src, dst, player)
-
-                if self.winner == "d":
-                    return self.board, 0
-                elif self.winner == player:
-                    return self.board, 100
-                elif self.winner != player and self.winner != "None":
-                    return self.board, -100
-
-                return self.board, 0
+                return self.board, self.score
             else:
                 self.board_has_changed = False
                 return self.board, 0
-
 
     def _make_move(self, src, dst, player):
 
@@ -308,6 +304,7 @@ class Engine:
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
         self.generate_legal_moves(self.turn_player)
+        self._calculate_score()
 
     def generate_legal_moves(self, color):
 
@@ -366,6 +363,11 @@ class Engine:
 
         if self._check_stalemate():
             self.winner = "d"
+
+        if self._check_threefold_repetition(self.previous_positions):
+            self.winner = "d"
+
+
     def _generate_pseudolegal_moves(self, color):
         for i in range(self.dim_x):
             for j in range(self.dim_y):
@@ -948,6 +950,45 @@ class Engine:
                     return False
         return True
 
+    def _calculate_score(self):
+        total_score = 0
+        for i in range(self.dim_x):
+            for j in range(self.dim_y):
+                if self.get_color((j, i)) == "w":
+                    if self.get_piece((j, i)) == "q":
+                        total_score += 9
+                    if self.get_piece((j, i)) == "r":
+                        total_score += 5
+                    if self.get_piece((j, i)) == "b":
+                        total_score += 3
+                    if self.get_piece((j, i)) == "n":
+                        total_score += 3
+                    if self.get_piece((j, i)) == "p":
+                        total_score += 1
+                elif self.get_color((j, i)) == "b":
+                    if self.get_piece((j, i)) == "q":
+                        total_score -= 9
+                    if self.get_piece((j, i)) == "r":
+                        total_score -= 5
+                    if self.get_piece((j, i)) == "b":
+                        total_score -= 3
+                    if self.get_piece((j, i)) == "n":
+                        total_score -= 3
+                    if self.get_piece((j, i)) == "p":
+                        total_score -= 1
+        self.score = total_score
+
+    def _check_threefold_repetition(self, previous_positions):
+        current_position = self.board
+        fen = Utils.encode_microchess_fen(current_position)
+        previous_positions.append(fen)
+        if previous_positions.count(fen) >= 2:
+            self.repetition_counter += 1
+
+        if self.repetition_counter >= 2 and previous_positions.count(fen) >= 3:
+            return True
+
+        return False
     #  DONE: Castling some testing left.
     #  DONE: Pins only some testing left.
     #  DONE: If in check limit moves. Or if in double check only king can move.
