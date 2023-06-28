@@ -118,10 +118,11 @@ def train_agent_vs_random(board_choice, num_episodes, agent_color):
                 agent.update_q_value(old_state, chosen_action, 0, current_state)
             draws += 1
 
-        print("Percentage:", round(episode / num_episodes * 100, 3), "%\t", "Winner:", my_engine.winner, "Game: ",
-              episode, "Total stats: ", w_wins, "/", b_wins, "/", draws)
+        print("|Percentage: {:<5.3f}%   |Winner: {:<5}  |Game: {:<5}    |Total stats: {}/{}/{}|".format(
+            round((episode + 1) / num_episodes * 100, 3), my_engine.winner, episode + 1, w_wins, b_wins, draws))
         rewards[episode] = total_reward
     Utils.save_q(agent)
+    print("Q values for Agent successfully stored!")
     return numpy.cumsum(rewards)
 
 
@@ -216,7 +217,9 @@ def train_agent_vs_agent(board_choice, num_episodes):
                 agent2.update_q_value(old_state_agent_2, chosen_action_agent_2, 0, current_state_agent_2)
             draws += 1
 
-        print("Percentage:", round(episode / num_episodes * 100, 3), "%\t", "Winner:", my_engine.winner, "Game: ",
-              episode, "Total stats: ", w_wins, "/", b_wins, "/", draws)
+        print("|Percentage: {:<5.3f}%   |Winner: {:<5}  |Game: {:<5}    |Total stats: {}/{}/{}".format(
+            round((episode + 1) / num_episodes * 100, 3), my_engine.winner, episode + 1, w_wins, b_wins, draws))
     Utils.save_q(agent1)
+    print("Q values for Agent1 successfully stored!")
     Utils.save_q(agent2)
+    print("Q values for Agent2 successfully stored!")

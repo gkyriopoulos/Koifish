@@ -133,8 +133,8 @@ class Engine:
             self.rook_big_w_moved = False
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
-        elif board_choice == "RKvsRB":
-            self.board = self._boardRKvsRK
+        elif board_choice == "RKvsBK":
+            self.board = self._boardRKvsBK
             self.dim_x = 4
             self.dim_y = 5
             self.king_pos_b = [0, 1]
@@ -149,8 +149,8 @@ class Engine:
             self.rook_big_w_moved = False
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
-        elif board_choice == "RKvsRN":
-            self.board = self._boardRKvsRK
+        elif board_choice == "RKvsNK":
+            self.board = self._boardRKvsNK
             self.dim_x = 4
             self.dim_y = 5
             self.king_pos_b = [0, 1]
@@ -261,18 +261,39 @@ class Engine:
             self.king_w_moved = True
         else:
 
+            piece = self.get_piece(dst)
+
             # Care might conflict with pawn move forwards
             if self.is_pawn(src) and self.get_piece(dst) == "*":
                 if player == "w":
                     self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
                     self.board[src[0]][src[1]] = "**"
+                    if self.board[dst[0] + 1][dst[1]] == "bp":
+                        self.score += 1
                     self.board[dst[0] + 1][dst[1]] = "**"
                 else:
                     self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
                     self.board[src[0]][src[1]] = "**"
+                    if self.board[dst[0] - 1][dst[1]] == "wp":
+                        self.score -= 1
                     self.board[dst[0] - 1][dst[1]] = "**"
-
             else:
+
+                # Big head way to calculate score
+                flag = 1 if player == "w" else -1
+
+                if piece != "*":
+                    if piece == "p":
+                        self.score += flag * 1
+                    elif piece == "n":
+                        self.score += flag * 3
+                    elif piece == "b":
+                        self.score += flag * 3
+                    elif piece == "r":
+                        self.score += flag * 5
+                    elif piece == "q":
+                        self.score += flag * 9
+
                 self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
                 self.board[src[0]][src[1]] = "**"
 
@@ -280,16 +301,20 @@ class Engine:
             if player == "w":
                 if self.is_pawn(dst) and dst[0] == 0:
                     if self.board_choice == "Normal":
-                        self.board[dst[0]][dst[1]] = "wr"
-                    else:
                         self.board[dst[0]][dst[1]] = "wq"
+                        self.score += 9
+                    else:
+                        self.board[dst[0]][dst[1]] = "wr"
+                        self.score += 5
 
             else:
                 if self.is_pawn(dst) and dst[0] == self.dim_y - 1:
-                    if self.board_choice == "MicroChess":
-                        self.board[dst[0]][dst[1]] = "br"
-                    else:
+                    if self.board_choice == "Normal":
                         self.board[dst[0]][dst[1]] = "bq"
+                        self.score -= 9
+                    else:
+                        self.board[dst[0]][dst[1]] = "br"
+                        self.score -= 5
 
         # Swaps the player and calculates legal moves for the next player.
         self.turn_player = "b" if self.turn_player == "w" else "w"
@@ -302,7 +327,6 @@ class Engine:
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
         self.generate_legal_moves(self.turn_player)
-        self._calculate_score()
 
     def generate_legal_moves(self, color):
 
@@ -940,13 +964,6 @@ class Engine:
         else:
             return []
 
-    def _check_stalemate(self):
-        for i in range(self.dim_x):
-            for j in range(self.dim_y):
-                if self.get_piece((j, i)) != "k" and self.get_piece((j, i)) != "*":
-                    return False
-        return True
-
     def _check_ins_material(self):
         counter = 0
         major_piece_counter = 0
@@ -966,34 +983,6 @@ class Engine:
             else:
                 return False
 
-    def _calculate_score(self):
-        total_score = 0
-        for i in range(self.dim_x):
-            for j in range(self.dim_y):
-                if self.get_color((j, i)) == "w":
-                    if self.get_piece((j, i)) == "q":
-                        total_score += 9
-                    if self.get_piece((j, i)) == "r":
-                        total_score += 5
-                    if self.get_piece((j, i)) == "b":
-                        total_score += 3
-                    if self.get_piece((j, i)) == "n":
-                        total_score += 3
-                    if self.get_piece((j, i)) == "p":
-                        total_score += 1
-                elif self.get_color((j, i)) == "b":
-                    if self.get_piece((j, i)) == "q":
-                        total_score -= 9
-                    if self.get_piece((j, i)) == "r":
-                        total_score -= 5
-                    if self.get_piece((j, i)) == "b":
-                        total_score -= 3
-                    if self.get_piece((j, i)) == "n":
-                        total_score -= 3
-                    if self.get_piece((j, i)) == "p":
-                        total_score -= 1
-        self.score = total_score
-
     def _check_threefold_repetition(self, previous_positions):
         current_position = self.board
         fen = Utils.encode_microchess_fen(current_position)
@@ -1005,6 +994,41 @@ class Engine:
             return True
 
         return False
+
+    # def _calculate_score(self):
+    #     total_score = 0
+    #     for i in range(self.dim_x):
+    #         for j in range(self.dim_y):
+    #             if self.get_color((j, i)) == "w":
+    #                 if self.get_piece((j, i)) == "q":
+    #                     total_score += 9
+    #                 if self.get_piece((j, i)) == "r":
+    #                     total_score += 5
+    #                 if self.get_piece((j, i)) == "b":
+    #                     total_score += 3
+    #                 if self.get_piece((j, i)) == "n":
+    #                     total_score += 3
+    #                 if self.get_piece((j, i)) == "p":
+    #                     total_score += 1
+    #             elif self.get_color((j, i)) == "b":
+    #                 if self.get_piece((j, i)) == "q":
+    #                     total_score -= 9
+    #                 if self.get_piece((j, i)) == "r":
+    #                     total_score -= 5
+    #                 if self.get_piece((j, i)) == "b":
+    #                     total_score -= 3
+    #                 if self.get_piece((j, i)) == "n":
+    #                     total_score -= 3
+    #                 if self.get_piece((j, i)) == "p":
+    #                     total_score -= 1
+    #     self.score = total_score
+
+    # def _check_stalemate(self):
+    #     for i in range(self.dim_x):
+    #         for j in range(self.dim_y):
+    #             if self.get_piece((j, i)) != "k" and self.get_piece((j, i)) != "*":
+    #                 return False
+    #     return True
 
     #  DONE: Castling some testing left.
     #  DONE: Pins only some testing left.

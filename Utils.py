@@ -1,5 +1,11 @@
-import ijson
+import ast
+import pickle
+
+import avro.schema
 import ujson
+from avro.datafile import DataFileWriter, DataFileReader
+from avro.io import DatumWriter, DatumReader
+
 import os
 
 
@@ -84,16 +90,39 @@ def encode_microchess_fen(board):
 #     with open(agent.file_name, "w") as file:
 #         ujson.dump(converted_data, file)
 
-def save_q(agent):
-    converted_data = {}
-    converted_data = {str(key): value for key, value in agent.q_values.items()}
+# def save_q(agent):
+#     converted_data = {}
+#     converted_data = {str(key): value for key, value in agent.q_values.items()}
+#
+#     # Use dumps to convert the data into a JSON string
+#     json_string = ujson.dumps(converted_data)
+#
+#     with open(agent.file_name, "w") as file:
+#         # Write the JSON string to the file
+#         file.write(json_string)
 
-    # Use dumps to convert the data into a JSON string
-    json_string = ujson.dumps(converted_data)
-
-    with open(agent.file_name, "w") as file:
-        # Write the JSON string to the file
-        file.write(json_string)
+# def save_q(agent):
+#     # Define the Avro schema for the Q-values
+#     schema = avro.schema.parse('''
+#         {
+#             "type": "record",
+#             "name": "QValues",
+#             "fields": [
+#                 {"name": "state_action", "type": "string"},
+#                 {"name": "q_value", "type": "double"}
+#             ]
+#         }
+#     ''')
+#
+#     # Create a DataFileWriter with the Avro schema
+#     writer = DataFileWriter(open(agent.file_name, "wb"), DatumWriter(), schema)
+#
+#     # Write each state-action pair and its corresponding Q-value to the Avro file
+#     for state_action, q_value in agent.q_values.items():
+#         writer.append({"state_action": str(state_action), "q_value": float(q_value)})
+#
+#     # Close the DataFileWriter to finalize the Avro file
+#     writer.close()
 
 
 # def load_q(agent):
@@ -108,20 +137,46 @@ def save_q(agent):
 #     else:
 #         return loaded_data
 
-def load_q(agent):
-    loaded_data = {}
-    if os.path.exists(agent.file_name):
-        # Open the file in read mode
-        with open(agent.file_name, 'r') as f:
-            # Read the entire file into a string
-            file_content = f.read()
-        # Use loads to convert the string into a Python object
-        loaded_str_data = ujson.loads(file_content)
-        # Convert string keys back to tuples
-        loaded_data = {eval(key): value for key, value in loaded_str_data.items()}
-        return loaded_data
-    else:
-        return loaded_data
+# def load_q(agent):
+#     loaded_data = {}
+#     if os.path.exists(agent.file_name):
+#         # Open the file in read mode
+#         with open(agent.file_name, 'r') as f:
+#             # Read the entire file into a string
+#             file_content = f.read()
+#         # Use loads to convert the string into a Python object
+#         loaded_str_data = ujson.loads(file_content)
+#         # Convert string keys back to tuples
+#         loaded_data = {eval(key): value for key, value in loaded_str_data.items()}
+#         return loaded_data
+#     else:
+#         return loaded_data
+
+# def load_q(agent):
+#     loaded_data = {}
+#     if os.path.exists(agent.file_name):
+#
+#         schema = avro.schema.parse('''
+#             {
+#                 "type": "record",
+#                 "name": "QValues",
+#                 "fields": [
+#                     {"name": "state_action", "type": "string"},
+#                     {"name": "q_value", "type": "double"}
+#                 ]
+#             }
+#         ''')
+#
+#         reader = DataFileReader(open(agent.file_name, "rb"), DatumReader())
+#
+#         for record in reader:
+#             state_action = ast.literal_eval(record["state_action"])
+#             q_value = record["q_value"]
+#             loaded_data[state_action] = q_value
+#
+#         reader.close()
+#
+#     return loaded_data
 
 # def load_q_for_board(agent, board_fen):
 #     loaded_data = {}
@@ -145,3 +200,144 @@ def load_q(agent):
 #             # Convert string keys back to tuples
 #             loaded_data = {eval(key): value for key, value in filtered_entries.items()}
 #             agent.q_values = loaded_data
+
+# def save_q(agent):
+#     # Define the Avro schema for the Q-values
+#     schema = avro.schema.parse('''
+#         {
+#             "type": "record",
+#             "name": "QValues",
+#             "fields": [
+#                 {
+#                     "name": "state_action",
+#                     "type": {
+#                         "type": "record",
+#                         "name": "StateAction",
+#                         "fields": [
+#                             {"name": "fenstring", "type": "string"},
+#                             {"name": "tuple1", "type": {
+#                                 "type": "record",
+#                                 "name": "Tuple1",
+#                                 "fields": [
+#                                     {"name": "int1", "type": "int"},
+#                                     {"name": "int2", "type": "int"}
+#                                 ]
+#                             }},
+#                             {"name": "tuple2", "type": {
+#                                 "type": "record",
+#                                 "name": "Tuple2",
+#                                 "fields": [
+#                                     {"name": "int3", "type": "int"},
+#                                     {"name": "int4", "type": "int"}
+#                                 ]
+#                             }}
+#                         ]
+#                     }
+#                 },
+#                 {"name": "q_value", "type": "double"}
+#             ]
+#         }
+#     ''')
+#
+#     # Create a DataFileWriter with the Avro schema
+#     writer = DataFileWriter(open(agent.file_name, "wb"), DatumWriter(), schema)
+#
+#     # Write each state-action pair and its corresponding Q-value to the Avro file
+#     for state_action, q_value in agent.q_values.items():
+#         fenstring, ((int1, int2), (int3, int4)) = state_action
+#         writer.append({
+#             "state_action": {
+#                 "fenstring": fenstring,
+#                 "tuple1": {"int1": int1, "int2": int2},
+#                 "tuple2": {"int3": int3, "int4": int4}
+#             },
+#             "q_value": float(q_value)
+#         })
+#
+#     # Close the DataFileWriter to finalize the Avro file
+#     writer.close()
+
+
+# def load_q(agent):
+#     loaded_data = {}
+#     if os.path.exists(agent.file_name):
+#         schema = avro.schema.parse('''
+#             {
+#                 "type": "record",
+#                 "name": "QValues",
+#                 "fields": [
+#                     {
+#                         "name": "state_action",
+#                         "type": {
+#                             "type": "record",
+#                             "name": "StateAction",
+#                             "fields": [
+#                                 {"name": "fenstring", "type": "string"},
+#                                 {"name": "tuple1", "type": {
+#                                     "type": "record",
+#                                     "name": "Tuple1",
+#                                     "fields": [
+#                                         {"name": "int1", "type": "int"},
+#                                         {"name": "int2", "type": "int"}
+#                                     ]
+#                                 }},
+#                                 {"name": "tuple2", "type": {
+#                                     "type": "record",
+#                                     "name": "Tuple2",
+#                                     "fields": [
+#                                         {"name": "int3", "type": "int"},
+#                                         {"name": "int4", "type": "int"}
+#                                     ]
+#                                 }}
+#                             ]
+#                         }
+#                     },
+#                     {"name": "q_value", "type": "double"}
+#                 ]
+#             }
+#         ''')
+#
+#         # Create a DataFileReader with the Avro schema
+#         reader = DataFileReader(open(agent.file_name, "rb"), DatumReader())
+#
+#         # Read each record from the Avro file and add it to the agent's Q-values
+#         for record in reader:
+#             fenstring = record["state_action"]["fenstring"]
+#             tuple1 = (record["state_action"]["tuple1"]["int1"], record["state_action"]["tuple1"]["int2"])
+#             tuple2 = (record["state_action"]["tuple2"]["int3"], record["state_action"]["tuple2"]["int4"])
+#             state_action = (fenstring, (tuple1, tuple2))
+#             q_value = record["q_value"]
+#             loaded_data[state_action] = q_value
+#
+#         # Close the DataFileReader
+#         reader.close()
+#     return loaded_data
+
+
+# def save_q(agent):
+#     with open(agent.file_name, "wb") as file:
+#         # Use pickle's dump function to write the dict object into the file
+#         pickle.dump(agent.q_values, file)
+#
+#
+# def load_q(agent):
+#     loaded_data = {}
+#     if os.path.exists(agent.file_name):
+#         with open(agent.file_name, "rb") as file:
+#             # Use pickle's load function to load the data from the file
+#             loaded_data = pickle.load(file)
+#     return loaded_data
+
+def save_q(agent):
+    with open(agent.file_name, "w") as file:
+        ujson.dump(agent.q_values, file)
+
+
+def load_q(agent):
+    loaded_data = {}
+    if os.path.exists(agent.file_name):
+        # Open the JSON file in read mode
+        with open(agent.file_name, 'r') as f:
+            loaded_data = ujson.load(f)
+
+    return loaded_data

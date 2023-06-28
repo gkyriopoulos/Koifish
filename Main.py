@@ -78,13 +78,14 @@ def draw_pinray(screen, square_width, square_height, squares):
 def main():
     # Choices are Normal, LosAlamos, MicroChess
     player = "w"
-    board_choice = "MicroChess"
-    mode = "pvp"
-    episodes = 500000
+    agent_player = "b"
+    board_choice = "RKvsRK"
+    mode = "pve"
+    episodes = 1000000
 
-    # Training
-    # regret_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
+    #Training
     # regret_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
+    # regret_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
     # Agent.train_agent_vs_agent(board_choice, episodes)
     #
     # plt.semilogy(regret_white / episodes, label="White reward, T = " + str(episodes))
@@ -96,7 +97,7 @@ def main():
 
     if mode == "pve":
         # Creating an agent to play against.
-        my_agent = Agent.QLearningAgent(board_choice, "b")
+        my_agent = Agent.QLearningAgent(board_choice, agent_player)
 
     # Assigning the aspect ratio for each board.
     if board_choice == "MicroChess":
@@ -114,12 +115,12 @@ def main():
         dim_y = 5
         window_width = dim_x * img_x
         window_height = dim_y * img_y
-    elif board_choice == "RKvsRB":
+    elif board_choice == "RKvsBK":
         dim_x = 4
         dim_y = 5
         window_width = dim_x * img_x
         window_height = dim_y * img_y
-    elif board_choice == "RKvsRN":
+    elif board_choice == "RKvsNK":
         dim_x = 4
         dim_y = 5
         window_width = dim_x * img_x
@@ -210,7 +211,8 @@ def main():
                                 pinray_clicks = 0
 
                             dst = [coords_y, coords_x]
-                            board, reward = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)
+                            board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)[0]
+                            #print(my_engine.score)
 
                             if my_engine.winner == "b":
                                 break
@@ -227,7 +229,7 @@ def main():
                                 encoded_board = Utils.encode_microchess_fen(my_engine.board)
                                 my_agent.actions = my_engine.legal_moves
                                 action = my_agent.choose_action(encoded_board)
-                                board = my_engine.attempt_move(action[0], action[1], "b")[0]
+                                board = my_engine.attempt_move(action[0], action[1], agent_player)[0]
 
                             dst.clear()
                             src.clear()
@@ -276,11 +278,22 @@ def main():
         user_input = input("Do you want to play again? (y/n)")
         if user_input == "y":
             play_again = True
-            player = "w"
+            if mode == "pvp":
+                if player == "b":
+                    player = "w"
         else:
             play_again = False
-            player = "w"
 
 
 if __name__ == "__main__":
+    # import cProfile
+    # cProfile.run('main()', "output.dat")
+    #
+    # import pstats
+    # from pstats import SortKey
+    #
+    # p = pstats.Stats("output.dat")
+    # p.sort_stats()
+    # p.dump_stats("results.prof")
+
     main()
