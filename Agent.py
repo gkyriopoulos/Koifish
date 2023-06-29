@@ -16,15 +16,17 @@ class QLearningAgent:
         self.q_values = Utils.load_q(self)
 
     def get_q_value(self, state, action):
-        if (state, action) not in self.q_values:
-            self.q_values[(state, action)] = 0.0
-        return self.q_values[(state, action)]
+        key = "('{}', {})".format(state, action)
+        if key not in self.q_values:
+            self.q_values[key] = 0.0
+        return self.q_values[key]
 
     def update_q_value(self, state, action, reward, next_state):
+        key = "('{}', {})".format(state, action)
         current_q = self.get_q_value(state, action)
         max_q = max(self.get_q_value(next_state, a) for a in self.actions)
         new_q = current_q + self.learning_rate * (reward + self.discount_factor * max_q - current_q)
-        self.q_values[(state, action)] = new_q
+        self.q_values[key] = new_q
 
     def choose_action(self, state):
         if self.actions:

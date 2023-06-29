@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import time
+
 import pygame
 import pygame.display
 import pygame.draw_py
@@ -80,20 +82,30 @@ def main():
     player = "w"
     agent_player = "b"
     board_choice = "RKvsRK"
-    mode = "pve"
-    episodes = 1000000
+    mode = "pvp"
+    episodes = 5000000
 
     #Training
-    # regret_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
-    # regret_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
-    # Agent.train_agent_vs_agent(board_choice, episodes)
-    #
-    # plt.semilogy(regret_white / episodes, label="White reward, T = " + str(episodes))
-    # plt.semilogy(regret_black / episodes, label="Black reward, T = " + str(episodes))
-    # plt.legend()
-    # plt.xlabel("Time")
-    # plt.ylabel("Average Reward")
-    # plt.show()
+    start_time1 = time.time()
+    reward_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
+    end_time1 = time.time() - start_time1
+    start_time2 = time.time()
+    reward_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
+    end_time2 = time.time() - start_time2
+    start_time3 = time.time()
+    Agent.train_agent_vs_agent(board_choice, episodes)
+    end_time3 = time.time() - start_time3
+
+    print("Black vs Random training time: ", end_time1)
+    print("White vs Random training time: ", end_time2)
+    print("White vs Black training time: ", end_time2)
+
+    plt.semilogy(reward_white / episodes, label="White reward, T = " + str(episodes))
+    plt.semilogy(reward_black / episodes, label="Black reward, T = " + str(episodes))
+    plt.legend()
+    plt.xlabel("Time")
+    plt.ylabel("Average Reward")
+    plt.show()
 
     if mode == "pve":
         # Creating an agent to play against.
@@ -283,6 +295,9 @@ def main():
                     player = "w"
         else:
             play_again = False
+
+
+
 
 
 if __name__ == "__main__":

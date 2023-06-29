@@ -166,6 +166,7 @@ class Engine:
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
 
+        self.moves = 0
         self.pieces = ["r", "n", "b", "q", "k", "p"]
         self.board_choice = board_choice
         self.repetition_counter = 0
@@ -327,6 +328,7 @@ class Engine:
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
         self.generate_legal_moves(self.turn_player)
+        self.moves += 1
 
     def generate_legal_moves(self, color):
 
