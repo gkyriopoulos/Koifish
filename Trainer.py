@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-import json
-import os
-import subprocess
 import sys
 import time
 
-import numpy
 import ujson
 from matplotlib import pyplot as plt
 
@@ -24,7 +20,6 @@ def main():
 
 
 def train(board, episodes, plot, save, train_w, train_b):
-
     avg_reward_w = []
     avg_reward_b = []
     wr_w = 0
@@ -47,7 +42,6 @@ def train(board, episodes, plot, save, train_w, train_b):
     # start_time3.append(time.time())
     # Agent.train_agent_vs_agent(tb, episodes)
     # end_time3.append(time.time())
-
 
     # times_agent_3 = numpy.subtract(end_time3, start_time3).tolist()
 
