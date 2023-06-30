@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import time
 
+import numpy
 import pygame
 import pygame.display
 import pygame.draw_py
@@ -8,6 +9,7 @@ import matplotlib.pyplot as plt
 
 import Agent
 import Engine
+import Trainer
 import Utils
 
 pygame.init()
@@ -81,38 +83,22 @@ def main():
     # Choices are Normal, LosAlamos, MicroChess
     player = "w"
     agent_player = "b"
-    board_choice = "RKvsRK"
-    mode = "pvp"
-    episodes = 5000000
+    board_choice = "RNKvsRK"
+    mode = "pve"
+    #, "KvsPK", "PKvsK", "RNKvsRK", "RKvsRNK"
+    training_boards = ["RKvsRK", "RNKvsRK"]
+    print_graphs = True
+    episodes = 5000
 
-    #Training
-    start_time1 = time.time()
-    reward_black = Agent.train_agent_vs_random(board_choice, episodes, "b")
-    end_time1 = time.time() - start_time1
-    start_time2 = time.time()
-    reward_white = Agent.train_agent_vs_random(board_choice, episodes, "w")
-    end_time2 = time.time() - start_time2
-    start_time3 = time.time()
-    Agent.train_agent_vs_agent(board_choice, episodes)
-    end_time3 = time.time() - start_time3
-
-    print("Black vs Random training time: ", end_time1)
-    print("White vs Random training time: ", end_time2)
-    print("White vs Black training time: ", end_time2)
-
-    plt.semilogy(reward_white / episodes, label="White reward, T = " + str(episodes))
-    plt.semilogy(reward_black / episodes, label="Black reward, T = " + str(episodes))
-    plt.legend()
-    plt.xlabel("Time")
-    plt.ylabel("Average Reward")
-    plt.show()
+    for b in training_boards:
+        Trainer.train(b, episodes, False, True, True, True)
 
     if mode == "pve":
         # Creating an agent to play against.
         my_agent = Agent.QLearningAgent(board_choice, agent_player)
 
     # Assigning the aspect ratio for each board.
-    if board_choice == "MicroChess":
+    if board_choice == "MicroChess" or "RKvsRK" or "PKvsK" or "KvsPK" or "RNKvsRK" or "RKvsRNK":
         dim_x = 4
         dim_y = 5
         window_width = dim_x * img_x
@@ -120,21 +106,6 @@ def main():
     elif board_choice == "LosAlamos":
         dim_x = 6
         dim_y = 6
-        window_width = dim_x * img_x
-        window_height = dim_y * img_y
-    elif board_choice == "RKvsRK":
-        dim_x = 4
-        dim_y = 5
-        window_width = dim_x * img_x
-        window_height = dim_y * img_y
-    elif board_choice == "RKvsBK":
-        dim_x = 4
-        dim_y = 5
-        window_width = dim_x * img_x
-        window_height = dim_y * img_y
-    elif board_choice == "RKvsNK":
-        dim_x = 4
-        dim_y = 5
         window_width = dim_x * img_x
         window_height = dim_y * img_y
     else:
@@ -224,7 +195,7 @@ def main():
 
                             dst = [coords_y, coords_x]
                             board = my_engine.attempt_move((src[0], src[1]), (dst[0], dst[1]), player)[0]
-                            #print(my_engine.score)
+                            # print(my_engine.score)
 
                             if my_engine.winner == "b":
                                 break
@@ -295,9 +266,6 @@ def main():
                     player = "w"
         else:
             play_again = False
-
-
-
 
 
 if __name__ == "__main__":

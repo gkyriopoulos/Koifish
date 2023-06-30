@@ -42,12 +42,6 @@ class Engine:
             ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"],
             ["wr", "**", "**", "**", "wk", "**", "**", "wr"]]
 
-        self._microChessMoves = {
-            "a1": (0, 4), "a2": (0, 3), "a3": (0, 2), "a4": (0, 1), "a5": (0, 0),
-            "b1": (1, 4), "b2": (1, 3), "b3": (1, 2), "b4": (1, 1), "b5": (1, 0),
-            "c1": (2, 4), "c2": (2, 3), "c3": (2, 2), "c4": (2, 1), "c5": (2, 0),
-            "d1": (3, 4), "d2": (3, 3), "d3": (3, 2), "d4": (3, 1), "d5": (3, 0)}
-
         self._boardRKvsRK = [
             ["**", "bk", "**", "**"],
             ["**", "br", "**", "**"],
@@ -55,18 +49,32 @@ class Engine:
             ["**", "**", "wr", "**"],
             ["**", "**", "wk", "**"]]
 
-        self._boardRKvsBK = [
+        self._boardRNKvsRK = [
             ["**", "bk", "**", "**"],
-            ["**", "br", "**", "**"],
+            ["br", "**", "**", "**"],
             ["**", "**", "**", "**"],
-            ["**", "**", "wb", "**"],
+            ["**", "**", "wn", "**"],
+            ["**", "**", "wk", "wr"]]
+
+        self._boardRKvsRNK = [
+            ["br", "bk", "**", "**"],
+            ["**", "bn", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "**", "wr"],
             ["**", "**", "wk", "**"]]
 
-        self._boardRKvsNK = [
+        self._boardPKvsK = [
             ["**", "bk", "**", "**"],
-            ["**", "br", "**", "**"],
             ["**", "**", "**", "**"],
-            ["**", "**", "**", "wn"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "wk", "wp"],
+            ["**", "**", "**", "**"]]
+
+        self._boardKvsPK = [
+            ["**", "**", "**", "**"],
+            ["bp", "bk", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "**", "**"],
             ["**", "**", "wk", "**"]]
 
         if board_choice == "MicroChess":
@@ -133,32 +141,64 @@ class Engine:
             self.rook_big_w_moved = False
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
-        elif board_choice == "RKvsBK":
-            self.board = self._boardRKvsBK
+        elif board_choice == "RKvsRNK":
+            self.board = self._boardRKvsRNK
             self.dim_x = 4
             self.dim_y = 5
             self.king_pos_b = [0, 1]
             self.king_pos_w = [4, 2]
             self.rook_small_w = None
-            self.rook_big_w = False
+            self.rook_big_w = (4, 3)
             self.rook_small_b = None
-            self.rook_big_b = (1, 1)
+            self.rook_big_b = (1, 0)
             self.king_b_moved = False
             self.king_w_moved = False
             self.rook_small_w_moved = False
             self.rook_big_w_moved = False
             self.rook_small_b_moved = False
             self.rook_big_b_moved = False
-        elif board_choice == "RKvsNK":
-            self.board = self._boardRKvsNK
+        elif board_choice == "RNKvsRK":
+            self.board = self._boardRNKvsRK
             self.dim_x = 4
             self.dim_y = 5
             self.king_pos_b = [0, 1]
             self.king_pos_w = [4, 2]
             self.rook_small_w = None
+            self.rook_big_w = (3, 3)
+            self.rook_small_b = None
+            self.rook_big_b = (0, 0)
+            self.king_b_moved = False
+            self.king_w_moved = False
+            self.rook_small_w_moved = False
+            self.rook_big_w_moved = False
+            self.rook_small_b_moved = False
+            self.rook_big_b_moved = False
+        elif board_choice == "KvsPK":
+            self.board = self._boardKvsPK
+            self.dim_x = 4
+            self.dim_y = 5
+            self.king_pos_b = [0, 1]
+            self.king_pos_w = [3, 2]
+            self.rook_small_w = None
             self.rook_big_w = False
             self.rook_small_b = None
-            self.rook_big_b = (1, 1)
+            self.rook_big_b = None
+            self.king_b_moved = False
+            self.king_w_moved = False
+            self.rook_small_w_moved = False
+            self.rook_big_w_moved = False
+            self.rook_small_b_moved = False
+            self.rook_big_b_moved = False
+        elif board_choice == "PKvsK":
+            self.board = self._boardPKvsK
+            self.dim_x = 4
+            self.dim_y = 5
+            self.king_pos_b = [1, 1]
+            self.king_pos_w = [4, 2]
+            self.rook_small_w = None
+            self.rook_big_w = False
+            self.rook_small_b = None
+            self.rook_big_b = None
             self.king_b_moved = False
             self.king_w_moved = False
             self.rook_small_w_moved = False
@@ -452,7 +492,7 @@ class Engine:
     # TODO: EN PASSANT CHANGES THE MOVES FOR THE PAWNS CARE!!!!!!!!!
     def _get_pawn_moves(self, src, color):
 
-        if self.board_choice == "MicroChess":
+        if self.board_choice == "MicroChess" or "RKvsRK" or "PKvsK" or "KvsPK" or "RNKvsRK" or "RKvsRNK":
 
             moves = []
             if color == "w":
