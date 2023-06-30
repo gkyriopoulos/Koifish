@@ -82,7 +82,7 @@ def main():
     board_choice = "RNKvsRK"
     mode = "pve"
 
-    train_agent = False
+    train_agent = True
     # , "KvsPK", "PKvsK", "RNKvsRK", "RKvsRNK"
     training_boards = ["RKvsRK", "RNKvsRK"]
     print_graphs = True
