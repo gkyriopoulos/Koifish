@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
-import time
-
-import numpy
 import pygame
 import pygame.display
 import pygame.draw_py
-import matplotlib.pyplot as plt
 
 import Agent
 import Engine
@@ -81,17 +77,24 @@ def draw_pinray(screen, square_width, square_height, squares):
 
 def main():
     # Choices are Normal, LosAlamos, MicroChess
-    player = "w"
-    agent_player = "b"
+    player = "b"
+    agent_player = "w"
     board_choice = "RNKvsRK"
     mode = "pve"
-    #, "KvsPK", "PKvsK", "RNKvsRK", "RKvsRNK"
+
+    train_agent = False
+    # , "KvsPK", "PKvsK", "RNKvsRK", "RKvsRNK"
     training_boards = ["RKvsRK", "RNKvsRK"]
     print_graphs = True
+    save_stats = True
+    train_white = True
+    train_black = True
+
     episodes = 5000
 
-    for b in training_boards:
-        Trainer.train(b, episodes, False, True, True, True)
+    if train_agent:
+        for b in training_boards:
+            Trainer.train(b, episodes, print_graphs, save_stats, train_white, train_black)
 
     if mode == "pve":
         # Creating an agent to play against.
@@ -141,6 +144,8 @@ def main():
         running = True
         my_engine = Engine.Engine(board_choice)
         board = my_engine.board
+        draw_board(screen, board, dim_x, dim_y, square_width, square_height)
+        pygame.display.update()
         while running:
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
@@ -208,11 +213,6 @@ def main():
                                 if my_engine.board_has_changed:
                                     # After making a move swap player.
                                     player = "b" if player == "w" else "w"
-                            else:
-                                encoded_board = Utils.encode_microchess_fen(my_engine.board)
-                                my_agent.actions = my_engine.legal_moves
-                                action = my_agent.choose_action(encoded_board)
-                                board = my_engine.attempt_move(action[0], action[1], agent_player)[0]
 
                             dst.clear()
                             src.clear()
@@ -233,6 +233,15 @@ def main():
                         else:
                             pinray = []
                             pinray_clicks = 0
+
+            if my_engine.turn_player == agent_player:
+                # If agent is white wait a bit before making the first move.
+                if my_engine.moves == 0 and agent_player == "w":
+                    pygame.time.wait(600)
+                encoded_board = Utils.encode_microchess_fen(my_engine.board)
+                my_agent.actions = my_engine.legal_moves
+                action = my_agent.choose_action(encoded_board)
+                board = my_engine.attempt_move(action[0], action[1], agent_player)[0]
 
             # If the game is not over draw the board.
             if my_engine.winner == "b":

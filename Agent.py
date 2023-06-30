@@ -55,8 +55,6 @@ def train_agent_vs_random(board_choice, num_episodes, agent_color):
         my_engine = Engine.Engine(board_choice)
         current_state = None
         chosen_action = None
-        reward = None
-        next_state = None
         old_state = None
         reward_until_end = 0
         total_reward = 0

@@ -224,15 +224,6 @@ class Engine:
         # I use this to player swap in player vs player mode it's probably not need.
         self.board_has_changed = False
 
-    # TODO: Type moves dont work for now but it's an easy fix though
-    def type_move(self, src, dst, player):
-        return self._make_move(self._convert_type_move(src), self._convert_type_move(dst), player)
-
-    def _convert_type_move(self, move):
-        move_x = self._microChessMoves[move][0]
-        move_y = self._microChessMoves[move][1]
-        return [move_y, move_x]
-
     def attempt_move(self, src, dst, player):
 
         if self.winner == "None":
