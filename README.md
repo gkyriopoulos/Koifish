@@ -1,2 +1,3 @@
-# BetaZero
-A simple Agent using Reiforcement Learning in the game of Chess.
+# Koifish
+A simple agent and engine using Reinforcement Learning techniques in the game of Chess.
+

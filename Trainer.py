@@ -2,6 +2,7 @@
 import sys
 import time
 
+import numpy
 import ujson
 from matplotlib import pyplot as plt
 
@@ -60,18 +61,24 @@ def train(board, episodes, plot, save, train_w, train_b):
         time_file = folder + '/' + board + "_time" + ".stats"
 
         with open(graph_file, 'a+') as file:
-            file.write(ujson.dumps(avg_reward_w.tolist()))
-            file.write('\n')
-            file.write(ujson.dumps(avg_reward_w.tolist()))
-            file.write('\n')
+            if train_w:
+                file.write(ujson.dumps(avg_reward_w.tolist()))
+                file.write('\n')
+            if train_b:
+                file.write(ujson.dumps(avg_reward_b.tolist()))
+                file.write('\n')
             file.write('\n')
         with open(wr_file, 'a+') as file:
-            file.write(str(wr_w) + '\n')
-            file.write(str(wr_b) + '\n')
+            if train_w:
+                file.write(str(wr_w) + '\n')
+            if train_b:
+                file.write(str(wr_b) + '\n')
             file.write('\n')
         with open(time_file, 'a+') as file:
-            file.write(str(time_w) + '\n')
-            file.write(str(time_b) + '\n')
+            if train_w:
+                file.write(str(time_w) + '\n')
+            if train_b:
+                file.write(str(time_b) + '\n')
             file.write('\n')
 
 

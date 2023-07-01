@@ -2,7 +2,6 @@
 import pygame
 import pygame.display
 import pygame.draw_py
-
 import Agent
 import Engine
 import Trainer
@@ -11,9 +10,7 @@ import Utils
 pygame.init()
 
 pieces = ["br", "bn", "bb", "bq", "bk", "bp", "wr", "wn", "wb", "wq", "wk", "wp"]
-
 img = {}
-
 img_x = 60
 img_y = 60
 
@@ -21,76 +18,25 @@ img_y = 60
 colors = [pygame.Color([240, 217, 181, 255]), pygame.Color([181, 136, 99, 255])]
 highlight_colors = pygame.Color([164, 212, 129, 255])
 bg_colors = pygame.Color([49, 46, 43, 255])
-button_colors = [pygame.Color([65, 62, 57, 255]), pygame.Color([56, 53, 49, 255])]
-
-
-# Function that loads piece images from the disk.
-def load_assets(piece_width, piece_height):
-    for piece in pieces:
-        img[piece] = pygame.transform.scale(pygame.image.load("misc/" + piece + ".png"), (piece_width, piece_height))
-
-
-# Function that draws a board:
-def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
-    for i in range(dim_x):
-        for j in range(dim_y):
-            color_index = (i + j) % 2
-            pygame.draw.rect(screen, colors[color_index],
-                             pygame.Rect(i * square_width, j * square_height, square_width, square_height))
-            piece = board[j][i]
-            if piece != "**":
-                screen.blit(img[piece], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
-
-
-def draw_highlights(screen, square_width, square_height, squares):
-    for square in squares:
-        pygame.draw.circle(screen, highlight_colors, (square_width * square[1][1] + square_width / 2,
-                                                      square_height * square[1][0] + square_height / 2), 10)
-
-
-def draw_threatmap(screen, square_width, square_height, squares):
-    for square in squares:
-        font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
-        surf = font.render('X', True, 'Red')
-        surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
-                                          square_height * square[0] + (square_height / 2)))
-        screen.blit(surf, surf_rect)
-
-
-def draw_threatmap_button(screen, color, length, center, pos):
-    font = pygame.font.SysFont('Sans-serif', int(30), bold=False)
-    surf = font.render('Show Threatmap', True, 'white')
-    surf_rect = surf.get_rect(center=(center[0], center[1]))
-    button = pygame.Rect(pos[0], pos[1], length[0], length[1])
-    pygame.draw.rect(screen, color, button)
-    screen.blit(surf, surf_rect)
-
-
-def draw_pinray(screen, square_width, square_height, squares):
-    for square in squares:
-        font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
-        surf = font.render('X', True, 'Blue')
-        surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
-                                          square_height * square[0] + (square_height / 2)))
-        screen.blit(surf, surf_rect)
 
 
 def main():
+    eye_candy()
     # Choices are Normal, LosAlamos, MicroChess
     player = "b"
     agent_player = "w"
-    board_choice = "RNKvsRK"
+    board_choice = "RKvsRK"
     mode = "pve"
 
     train_agent = True
     # , "KvsPK", "PKvsK", "RNKvsRK", "RKvsRNK"
-    training_boards = ["RKvsRK", "RNKvsRK"]
-    print_graphs = True
+    training_boards = ["RKvsRK"]
+    print_graphs = False
     save_stats = True
     train_white = True
     train_black = True
 
-    episodes = 5000
+    episodes = 5000000
 
     if train_agent:
         for b in training_boards:
@@ -234,7 +180,7 @@ def main():
                             pinray = []
                             pinray_clicks = 0
 
-            if my_engine.turn_player == agent_player:
+            if my_engine.turn_player == agent_player and mode == "pve" and my_engine.winner == "None":
                 # If agent is white wait a bit before making the first move.
                 if my_engine.moves == 0 and agent_player == "w":
                     pygame.time.wait(600)
@@ -277,6 +223,84 @@ def main():
             play_again = False
 
 
+# Function that loads piece images from the disk.
+def load_assets(piece_width, piece_height):
+    for piece in pieces:
+        img[piece] = pygame.transform.scale(pygame.image.load("misc/" + piece + ".png"), (piece_width, piece_height))
+
+
+# Function that draws a board:
+def draw_board(screen, board, dim_x, dim_y, square_width, square_height):
+    for i in range(dim_x):
+        for j in range(dim_y):
+            color_index = (i + j) % 2
+            pygame.draw.rect(screen, colors[color_index],
+                             pygame.Rect(i * square_width, j * square_height, square_width, square_height))
+            piece = board[j][i]
+            if piece != "**":
+                screen.blit(img[piece], pygame.Rect(i * square_width, j * square_height, square_width, square_height))
+
+
+def draw_highlights(screen, square_width, square_height, squares):
+    for square in squares:
+        pygame.draw.circle(screen, highlight_colors, (square_width * square[1][1] + square_width / 2,
+                                                      square_height * square[1][0] + square_height / 2), 10)
+
+
+def draw_threatmap(screen, square_width, square_height, squares):
+    for square in squares:
+        font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
+        surf = font.render('X', True, 'Red')
+        surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
+                                          square_height * square[0] + (square_height / 2)))
+        screen.blit(surf, surf_rect)
+
+
+def draw_threatmap_button(screen, color, length, center, pos):
+    font = pygame.font.SysFont('Sans-serif', int(30), bold=False)
+    surf = font.render('Show Threatmap', True, 'white')
+    surf_rect = surf.get_rect(center=(center[0], center[1]))
+    button = pygame.Rect(pos[0], pos[1], length[0], length[1])
+    pygame.draw.rect(screen, color, button)
+    screen.blit(surf, surf_rect)
+
+
+def draw_pinray(screen, square_width, square_height, squares):
+    for square in squares:
+        font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
+        surf = font.render('X', True, 'Blue')
+        surf_rect = surf.get_rect(center=(square_width * square[1] + (square_width / 2),
+                                          square_height * square[0] + (square_height / 2)))
+        screen.blit(surf, surf_rect)
+
+
+def eye_candy():
+    koi_fish = r'''
+####################################
+        Welcome to Koifish!         
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣶⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢠⣶⣿⣿⣿⣿⣿⣿⣿⣶⣤⡀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⡅⠀⣸⣿⣿⣿⠿⠟⠛⠿⣿⠆⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⣿⣿⣿⠟⠁⣠⣶⣶⣦⣤⣤⣾⣷⣄⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠛⠉⣁⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇
+⠀⠀⠀⠀⠀⣀⠀⠀⠀⣴⣿⣿⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀
+⢠⣤⣄⡀⣼⣿⣧⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⠀⠀
+⠘⣿⣿⣿⣿⣿⣿⠀⠀⠀⠀⣩⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀⠀
+⠀⠈⠻⢿⣿⣿⣿⣶⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠋⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠉⠛⠛⠿⠿⠿⠿⠟⠛⠛⠉⠀
+⠀⠀⠀⠀⠀    
+Copyright 
+© 2023 Joel Jani &
+George Kyriopoulos           
+###################################
+    '''
+    print(koi_fish)
+    pygame.time.wait(500)
+
+
 if __name__ == "__main__":
     # import cProfile
     # cProfile.run('main()', "output.dat")
@@ -287,5 +311,4 @@ if __name__ == "__main__":
     # p = pstats.Stats("output.dat")
     # p.sort_stats()
     # p.dump_stats("results.prof")
-
     main()
