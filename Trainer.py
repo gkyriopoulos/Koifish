@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import time
-
-import numpy
 import ujson
 from matplotlib import pyplot as plt
 
@@ -15,7 +13,7 @@ def main():
         return
 
     board = sys.argv[1]
-    episodes = sys.argv[2]
+    episodes = int(sys.argv[2])
 
     train(board, episodes, False, True, True, True)
 
@@ -82,5 +80,5 @@ def train(board, episodes, plot, save, train_w, train_b):
             file.write('\n')
 
 
-if __name__ == 'main':
+if __name__ == "__main__":
     main()
