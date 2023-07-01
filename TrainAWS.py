@@ -23,12 +23,12 @@ def run_main_program(board, episodes):
 
 def main():
     if len(sys.argv) != 3:
-        print("Please provide the personal access token as a command-line argument.")
+        print("Please provide command-line arguments.")
         return
     
     #token = sys.argv[1]
-    board = sys.argv[2]
-    episodes = sys.argv[3]
+    board = sys.argv[1]
+    episodes = sys.argv[2]
     
     run_main_program(board,episodes)
     #commit_changes(token)
