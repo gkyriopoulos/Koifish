@@ -25,18 +25,17 @@ def main():
     # Choices are Normal, LosAlamos, MicroChess
     player = "b"
     agent_player = "w"
-    board_choice = "RKvsRK"
+    board_choice = "PKvsPK"
     mode = "pve"
 
-    train_agent = True
-    # , "KvsPK", "PKvsK", "RNKvsRK", "RKvsRNK"
-    training_boards = ["RKvsRK"]
-    print_graphs = False
+    train_agent = False
+    training_boards = ["RKvsRNK"]
+    print_graphs = True
     save_stats = True
     train_white = True
     train_black = True
 
-    episodes = 5000000
+    episodes = 1500000
 
     if train_agent:
         for b in training_boards:
@@ -47,7 +46,7 @@ def main():
         my_agent = Agent.QLearningAgent(board_choice, agent_player)
 
     # Assigning the aspect ratio for each board.
-    if board_choice == "MicroChess" or "RKvsRK" or "PKvsK" or "KvsPK" or "RNKvsRK" or "RKvsRNK":
+    if board_choice in ("MicroChess", "RKvsRK", "PKvsK", "KvsPK", "RNKvsRK", "RKvsRNK", "PKvsPK"):
         dim_x = 4
         dim_y = 5
         window_width = dim_x * img_x

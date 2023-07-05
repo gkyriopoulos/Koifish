@@ -77,6 +77,13 @@ class Engine:
             ["**", "**", "**", "**"],
             ["**", "**", "wk", "**"]]
 
+        self._boardPKvsPK = [
+            ["**", "**", "**", "**"],
+            ["bp", "bk", "**", "**"],
+            ["**", "**", "**", "**"],
+            ["**", "**", "wk", "wp"],
+            ["**", "**", "**", "**"]]
+
         if board_choice == "MicroChess":
             self.board = self._boardMicroChess
             self.dim_x = 4
@@ -195,6 +202,22 @@ class Engine:
             self.dim_y = 5
             self.king_pos_b = [1, 1]
             self.king_pos_w = [4, 2]
+            self.rook_small_w = None
+            self.rook_big_w = False
+            self.rook_small_b = None
+            self.rook_big_b = None
+            self.king_b_moved = False
+            self.king_w_moved = False
+            self.rook_small_w_moved = False
+            self.rook_big_w_moved = False
+            self.rook_small_b_moved = False
+            self.rook_big_b_moved = False
+        elif board_choice == "PKvsPK":
+            self.board = self._boardPKvsPK
+            self.dim_x = 4
+            self.dim_y = 5
+            self.king_pos_b = [1, 1]
+            self.king_pos_w = [3, 2]
             self.rook_small_w = None
             self.rook_big_w = False
             self.rook_small_b = None

@@ -1,7 +1,10 @@
 import random
+import sys
+
 import numpy
 import Utils
 import Engine
+from tqdm.auto import tqdm
 
 
 # Define the Q-learning agent
@@ -45,13 +48,17 @@ def train_agent_vs_random(board_choice, num_episodes, agent_color):
     b_wins = 0
     w_wins = 0
     draws = 0
+    bar_ep = num_episodes / 10
+    bar_y = []
+    bar_x = []
+
     rewards = numpy.zeros(num_episodes)
 
     agent = QLearningAgent(board_choice, agent_color)
 
     random_color = "b" if agent_color == "w" else "w"
 
-    for episode in range(num_episodes):
+    for episode in tqdm(range(1, num_episodes + 1), file=sys.stdout):
         my_engine = Engine.Engine(board_choice)
         current_state = None
         chosen_action = None
@@ -77,14 +84,10 @@ def train_agent_vs_random(board_choice, num_episodes, agent_color):
                 next_state = Utils.encode_microchess_fen(next_state)
                 agent.actions = my_engine.legal_moves
 
-                # if my_engine.legal_moves:
                 # Update the Q-value for the current state-action pair
                 if my_engine.moves > 1:
                     agent.update_q_value(old_state, chosen_action, 0, next_state)
 
-                # old_state = current_state
-                # current_state = next_state
-
         if my_engine.winner == "b":
             if agent_color == "b":
                 total_reward = reward_until_end + 1
@@ -102,80 +105,75 @@ def train_agent_vs_random(board_choice, num_episodes, agent_color):
                 agent.update_q_value(old_state, chosen_action, 1, current_state)
             w_wins += 1
         else:
-            # if reward > 0:
-            #     total_reward = reward_until_end - 50
-            #     agent.update_q_value(old_state, chosen_action, -50, current_state)
-            # if reward < 0:
-            #     total_reward = reward_until_end + 50
-            #     agent.update_q_value(old_state, chosen_action, 50, current_state)
-            # if reward == 0:
-            #     agent.update_q_value(old_state, chosen_action, 0, current_state)
             draws += 1
-
-        print("|Percentage: {:<5.3f}%   |Winner: {:<5}  |Game: {:<5}    |Total stats: {}/{}/{}|".format(
-            round((episode + 1) / num_episodes * 100, 3), my_engine.winner, episode + 1, w_wins, b_wins, draws))
-        rewards[episode] = total_reward
+        if episode % bar_ep == 0:
+            bar_y.append([w_wins, b_wins, draws])
+            bar_x.append(episode)
+        # print("|Percentage: {:<5.3f}%   |Winner: {:<5}  |Game: {:<5}    |Total stats: {}/{}/{}|".format(
+        #     round(episode / num_episodes * 100, 3), my_engine.winner, episode, w_wins, b_wins, draws))
+        rewards[episode - 1] = total_reward
     Utils.save_q(agent)
+    print("Total stats: {}/{}/{}".format(w_wins, b_wins, draws))
     print("Q values for Agent successfully stored!")
-    return numpy.cumsum(rewards) / num_episodes, (w_wins, b_wins, draws)
+    return numpy.cumsum(rewards) / num_episodes, (w_wins, b_wins, draws), bar_y, bar_x
 
+# It was used during the development it's not useful for now.
+# def compare_agents(board_choice, num_episodes):
+#     old_state_agent_1 = None
+#     chosen_action_agent_1 = None
+#     current_state_agent_1 = None
+#     old_state_agent_2 = None
+#     chosen_action_agent_2 = None
+#     current_state_agent_2 = None
+#     reward_agent_1 = None
+#
+#     b_wins = 0
+#     w_wins = 0
+#     draws = 0
+#
+#     agent_1_color = "b"
+#     agent_2_color = "w"
+#
+#     agent1 = QLearningAgent(board_choice, agent_1_color)
+#     agent2 = QLearningAgent(board_choice, agent_2_color)
+#
+#     for episode in range(num_episodes):
+#         my_engine = Engine.Engine(board_choice)
+#
+#         while my_engine.winner == "None":
+#             if my_engine.turn_player == agent_1_color:
+#                 current_state_agent_1 = Utils.encode_microchess_fen(my_engine.board)
+#                 # print(my_engine.board)
+#                 # Choose an action based on the current state
+#                 agent1.actions = my_engine.legal_moves.copy()
+#                 chosen_action_agent_1 = agent1.choose_action(current_state_agent_1)
+#                 # Perform the chosen action and observe the next state and reward
+#                 next_state_agent_1 = my_engine.attempt_move(chosen_action_agent_1[0], chosen_action_agent_1[1],
+#                                                             agent_1_color)
+#             else:
+#                 current_state_agent_2 = Utils.encode_microchess_fen(my_engine.board)
+#                 # print(my_engine.board)
+#                 # Choose an action based on the current state
+#                 agent2.actions = my_engine.legal_moves.copy()
+#                 chosen_action_agent_2 = agent2.choose_action(current_state_agent_2)
+#                 # Perform the chosen action and observe the next state and reward
+#                 next_state_agent_2 = my_engine.attempt_move(chosen_action_agent_2[0], chosen_action_agent_2[1],
+#                                                             agent_2_color)
+#         if my_engine.winner == "b":
+#             b_wins += 1
+#         elif my_engine.winner == "w":
+#             w_wins += 1
+#         else:
+#             draws += 1
+#
+#         print("|Percentage: {:<5.3f}%   |Winner: {:<5}  |Game: {:<5}    |Total stats: {}/{}/{}".format(
+#             round((episode + 1) / num_episodes * 100, 3), my_engine.winner, episode + 1, w_wins, b_wins, draws))
+#     Utils.save_q(agent1)
+#     print("Q values for Agent1 successfully stored!")
+#     Utils.save_q(agent2)
+#     print("Q values for Agent2 successfully stored!")
 
-def compare_agents(board_choice, num_episodes):
-    old_state_agent_1 = None
-    chosen_action_agent_1 = None
-    current_state_agent_1 = None
-    old_state_agent_2 = None
-    chosen_action_agent_2 = None
-    current_state_agent_2 = None
-    reward_agent_1 = None
-
-    b_wins = 0
-    w_wins = 0
-    draws = 0
-
-    agent_1_color = "b"
-    agent_2_color = "w"
-
-    agent1 = QLearningAgent(board_choice, agent_1_color)
-    agent2 = QLearningAgent(board_choice, agent_2_color)
-
-    for episode in range(num_episodes):
-        my_engine = Engine.Engine(board_choice)
-
-        while my_engine.winner == "None":
-            if my_engine.turn_player == agent_1_color:
-                current_state_agent_1 = Utils.encode_microchess_fen(my_engine.board)
-                # print(my_engine.board)
-                # Choose an action based on the current state
-                agent1.actions = my_engine.legal_moves.copy()
-                chosen_action_agent_1 = agent1.choose_action(current_state_agent_1)
-                # Perform the chosen action and observe the next state and reward
-                next_state_agent_1 = my_engine.attempt_move(chosen_action_agent_1[0], chosen_action_agent_1[1],
-                                                            agent_1_color)
-            else:
-                current_state_agent_2 = Utils.encode_microchess_fen(my_engine.board)
-                # print(my_engine.board)
-                # Choose an action based on the current state
-                agent2.actions = my_engine.legal_moves.copy()
-                chosen_action_agent_2 = agent2.choose_action(current_state_agent_2)
-                # Perform the chosen action and observe the next state and reward
-                next_state_agent_2 = my_engine.attempt_move(chosen_action_agent_2[0], chosen_action_agent_2[1],
-                                                            agent_2_color)
-        if my_engine.winner == "b":
-            b_wins += 1
-        elif my_engine.winner == "w":
-            w_wins += 1
-        else:
-            draws += 1
-
-        print("|Percentage: {:<5.3f}%   |Winner: {:<5}  |Game: {:<5}    |Total stats: {}/{}/{}".format(
-            round((episode + 1) / num_episodes * 100, 3), my_engine.winner, episode + 1, w_wins, b_wins, draws))
-    Utils.save_q(agent1)
-    print("Q values for Agent1 successfully stored!")
-    Utils.save_q(agent2)
-    print("Q values for Agent2 successfully stored!")
-
-# TODO: EINAI LATHOS THELEI ALLAGES GIA NA PAIZEI SWSTA MIKRE ;)
+# It was used during the development it's not useful for now.
 # def train_agent_vs_agent(board_choice, num_episodes):
 #     # Q-learning training loop
 #
