@@ -247,6 +247,7 @@ class Engine:
         # I use this to player swap in player vs player mode it's probably not need.
         self.board_has_changed = False
 
+# Attempts to make a move given a src and a destination.
     def attempt_move(self, src, dst, player):
 
         if self.winner == "None":
@@ -258,6 +259,7 @@ class Engine:
                 self.board_has_changed = False
                 return self.board, 0
 
+# Actually tries to make the move to the chess board.
     def _make_move(self, src, dst, player):
 
         if player != self.turn_player:
@@ -319,6 +321,8 @@ class Engine:
             piece = self.get_piece(dst)
 
             # Care might conflict with pawn move forwards
+            # This part moves the pawn forward in case we have en-passaunt
+            # This requires carefully handling
             if self.is_pawn(src) and self.get_piece(dst) == "*":
                 if player == "w":
                     self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
@@ -349,10 +353,11 @@ class Engine:
                     elif piece == "q":
                         self.score += flag * 9
 
+                # Move the piece to the destination
                 self.board[dst[0]][dst[1]] = self.board[src[0]][src[1]]
                 self.board[src[0]][src[1]] = "**"
 
-                # Promotion stuff
+            # Promotion stuff
             if player == "w":
                 if self.is_pawn(dst) and dst[0] == 0:
                     if self.board_choice == "Normal":
@@ -374,6 +379,7 @@ class Engine:
         # Swaps the player and calculates legal moves for the next player.
         self.turn_player = "b" if self.turn_player == "w" else "w"
         self.board_has_changed = True
+        # Also clears some useless stuff for the next round
         self.pseudolegal_moves.clear()
         self.threatmap.clear()
         self.legal_moves.clear()
@@ -381,6 +387,7 @@ class Engine:
         self.checkers.clear()
         # Note: If you change the position of generate legal moves you will have issue with pawns and checks because
         # you move the pawn and then check for a check BE CAREFUL!
+        # At the end of our move we generate the legal moves for the next player
         self.generate_legal_moves(self.turn_player)
         self.moves += 1
 
@@ -416,6 +423,7 @@ class Engine:
         if castle_small_move:
             self.legal_moves.append(castle_small_move)
 
+        # Checking for checks and checkmates
         self.checkers = self._check_check(color)
         if len(self.checkers) > 1:
             king_legal_moves = [x for x in king_moves if x[1] not in (king_moves_set & threatmap_set)]
@@ -436,6 +444,7 @@ class Engine:
         # Remove empty moves
         self.legal_moves = [x for x in self.legal_moves if x]
 
+        # Draw conditions
         if not self.legal_moves:
             self.winner = "d"
 
@@ -445,6 +454,7 @@ class Engine:
         if self._check_threefold_repetition(self.previous_positions):
             self.winner = "d"
 
+    # Generates the pseudo legal moves. These are the moves regardless of their legality.
     def _generate_pseudolegal_moves(self, color):
         for i in range(self.dim_x):
             for j in range(self.dim_y):

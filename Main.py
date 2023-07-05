@@ -22,20 +22,19 @@ bg_colors = pygame.Color([49, 46, 43, 255])
 
 def main():
     eye_candy()
-    # Choices are Normal, LosAlamos, MicroChess
-    player = "b"
-    agent_player = "w"
+    player = "w"
+    agent_player = "b"
     board_choice = "PKvsPK"
     mode = "pve"
 
     train_agent = False
-    training_boards = ["RKvsRNK"]
+    # You can enter any number of the available boards here
+    training_boards = ["RKvsRK"]
     print_graphs = True
     save_stats = True
     train_white = True
-    train_black = True
-
-    episodes = 1500000
+    train_black = False
+    episodes = 100000
 
     if train_agent:
         for b in training_boards:
@@ -179,6 +178,7 @@ def main():
                             pinray = []
                             pinray_clicks = 0
 
+            # If the game is not over ask the agent to give us a move
             if my_engine.turn_player == agent_player and mode == "pve" and my_engine.winner == "None":
                 # If agent is white wait a bit before making the first move.
                 if my_engine.moves == 0 and agent_player == "w":
@@ -199,8 +199,10 @@ def main():
                 print("Draw!")
                 running = False
 
+            # Draw the board to the screen
             draw_board(screen, board, dim_x, dim_y, square_width, square_height)
 
+            # Threat maps and pinrays
             if highlighted_moves:
                 draw_highlights(screen, square_width, square_height, highlighted_moves)
 
@@ -255,15 +257,6 @@ def draw_threatmap(screen, square_width, square_height, squares):
         screen.blit(surf, surf_rect)
 
 
-def draw_threatmap_button(screen, color, length, center, pos):
-    font = pygame.font.SysFont('Sans-serif', int(30), bold=False)
-    surf = font.render('Show Threatmap', True, 'white')
-    surf_rect = surf.get_rect(center=(center[0], center[1]))
-    button = pygame.Rect(pos[0], pos[1], length[0], length[1])
-    pygame.draw.rect(screen, color, button)
-    screen.blit(surf, surf_rect)
-
-
 def draw_pinray(screen, square_width, square_height, squares):
     for square in squares:
         font = pygame.font.SysFont('Sans-serif', int(50), bold=False)
@@ -301,6 +294,7 @@ George Kyriopoulos
 
 
 if __name__ == "__main__":
+    # Profiler code
     # import cProfile
     # cProfile.run('main()', "output.dat")
     #

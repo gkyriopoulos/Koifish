@@ -15,7 +15,7 @@ class QLearningAgent:
         self.file_name = self.path + filename + "_" + color + ".json"
         self.actions = None
         self.learning_rate = 0.5
-        self.discount_factor = 0.9
+        self.discount_factor = 1
         self.epsilon = 0.1
         self.q_values = Utils.load_q(self)
 
